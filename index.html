@@ -1,0 +1,2561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IRIS — Intrusion Response & Intelligence System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-void: #020508;
+      --bg-deep: #050d14;
+      --bg-panel: #080f1a;
+      --bg-card: #0a1520;
+      --bg-card-hover: #0d1c2b;
+      --border: rgba(0,200,255,0.12);
+      --border-bright: rgba(0,200,255,0.35);
+      --cyan: #00c8ff;
+      --cyan-dim: rgba(0,200,255,0.6);
+      --cyan-ghost: rgba(0,200,255,0.08);
+      --green: #00ff8c;
+      --green-dim: rgba(0,255,140,0.6);
+      --red: #ff3b5c;
+      --red-dim: rgba(255,59,92,0.6);
+      --orange: #ff8c00;
+      --orange-dim: rgba(255,140,0,0.6);
+      --yellow: #ffe600;
+      --purple: #9b59ff;
+      --text-primary: #d0e8f0;
+      --text-secondary: #5a8fa8;
+      --text-dim: #2a5068;
+      --font-mono: 'Share Tech Mono', monospace;
+      --font-head: 'Exo 2', sans-serif;
+      --font-body: 'Rajdhani', sans-serif;
+      --glow-cyan: 0 0 20px rgba(0,200,255,0.25), 0 0 60px rgba(0,200,255,0.08);
+      --glow-red: 0 0 20px rgba(255,59,92,0.3), 0 0 60px rgba(255,59,92,0.1);
+      --glow-green: 0 0 20px rgba(0,255,140,0.25), 0 0 60px rgba(0,255,140,0.08);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-void);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.6;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Scanline overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.05) 2px,
+        rgba(0,0,0,0.05) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* Grid background */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,200,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,200,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── PAGES ─── */
+    .page { display: none; min-height: 100vh; position: relative; z-index: 1; }
+    .page.active { display: flex; flex-direction: column; }
+
+    /* ─── AUTH PAGE ─── */
+    #auth-page {
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(ellipse at 50% 40%, rgba(0,100,150,0.15) 0%, transparent 70%);
+    }
+
+    .auth-wrapper {
+      width: 100%;
+      max-width: 440px;
+      padding: 20px;
+    }
+
+    .iris-logo {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .iris-logo .iris-eye {
+      width: 70px;
+      height: 70px;
+      margin: 0 auto 16px;
+      position: relative;
+    }
+
+    .iris-eye svg { width: 100%; height: 100%; }
+
+    .iris-logo h1 {
+      font-family: var(--font-head);
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: 12px;
+      color: var(--cyan);
+      text-shadow: var(--glow-cyan);
+      text-transform: uppercase;
+    }
+
+    .iris-logo p {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-secondary);
+      letter-spacing: 3px;
+      margin-top: 4px;
+    }
+
+    .auth-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 36px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auth-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    }
+
+    .auth-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 28px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 10px;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.2s;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+
+    .auth-tab.active {
+      color: var(--cyan);
+      border-bottom-color: var(--cyan);
+    }
+
+    .form-group { margin-bottom: 20px; }
+
+    .form-label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .form-input {
+      width: 100%;
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 12px 14px;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .form-input:focus {
+      border-color: var(--cyan-dim);
+      box-shadow: 0 0 0 1px rgba(0,200,255,0.1), inset 0 0 20px rgba(0,200,255,0.03);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, rgba(0,200,255,0.15), rgba(0,200,255,0.05));
+      border: 1px solid var(--cyan-dim);
+      border-radius: 2px;
+      color: var(--cyan);
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(0,200,255,0.2), transparent);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .btn-primary:hover::after { opacity: 1; }
+    .btn-primary:hover { box-shadow: var(--glow-cyan); }
+
+    .error-msg {
+      background: rgba(255,59,92,0.1);
+      border: 1px solid rgba(255,59,92,0.3);
+      border-radius: 2px;
+      padding: 10px 14px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--red);
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    /* ─── MAIN LAYOUT ─── */
+    #main-page { flex-direction: row; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      min-width: 220px;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .sidebar-logo {
+      padding: 20px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sidebar-logo span {
+      font-family: var(--font-head);
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 6px;
+      color: var(--cyan);
+      text-shadow: var(--glow-cyan);
+    }
+
+    .sidebar-logo .version {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+    }
+
+    .sidebar-status {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.offline { background: var(--red); box-shadow: 0 0 8px var(--red); animation: none; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .nav-section {
+      padding: 16px 0;
+      flex: 1;
+    }
+
+    .nav-label {
+      padding: 6px 16px;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      border-left: 2px solid transparent;
+      position: relative;
+    }
+
+    .nav-item:hover { color: var(--text-primary); background: rgba(0,200,255,0.04); }
+
+    .nav-item.active {
+      color: var(--cyan);
+      border-left-color: var(--cyan);
+      background: rgba(0,200,255,0.07);
+    }
+
+    .nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+    .nav-badge {
+      margin-left: auto;
+      background: rgba(255,59,92,0.2);
+      border: 1px solid rgba(255,59,92,0.4);
+      color: var(--red);
+      font-family: var(--font-mono);
+      font-size: 9px;
+      padding: 1px 6px;
+      border-radius: 10px;
+    }
+
+    .sidebar-user {
+      padding: 14px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--cyan-dim), var(--purple));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-size: 13px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .user-info { flex: 1; min-width: 0; }
+    .user-email {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .user-tier {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--cyan-dim);
+      letter-spacing: 1px;
+    }
+
+    .btn-logout {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 14px;
+      transition: color 0.2s;
+      padding: 4px;
+    }
+    .btn-logout:hover { color: var(--red); }
+
+    /* ─── CONTENT AREA ─── */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .view { display: none; padding: 24px; }
+    .view.active { display: block; }
+
+    /* ─── PAGE HEADER ─── */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .page-title {
+      font-family: var(--font-head);
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .page-subtitle {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-secondary);
+      letter-spacing: 2px;
+      margin-top: 4px;
+    }
+
+    .timestamp {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    /* ─── METRICS GRID ─── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+
+    .metric-card:hover { border-color: var(--border-bright); background: var(--bg-card-hover); }
+
+    .metric-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+    }
+    .metric-card.cyan::after { background: linear-gradient(90deg, transparent, var(--cyan), transparent); }
+    .metric-card.red::after { background: linear-gradient(90deg, transparent, var(--red), transparent); }
+    .metric-card.green::after { background: linear-gradient(90deg, transparent, var(--green), transparent); }
+    .metric-card.orange::after { background: linear-gradient(90deg, transparent, var(--orange), transparent); }
+
+    .metric-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .metric-value {
+      font-family: var(--font-head);
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .metric-card.cyan .metric-value { color: var(--cyan); text-shadow: var(--glow-cyan); }
+    .metric-card.red .metric-value { color: var(--red); text-shadow: var(--glow-red); }
+    .metric-card.green .metric-value { color: var(--green); text-shadow: var(--glow-green); }
+    .metric-card.orange .metric-value { color: var(--orange); }
+
+    .metric-delta {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    /* ─── PANEL ─── */
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      margin-bottom: 20px;
+    }
+
+    .panel-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-title {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--cyan-dim);
+      text-transform: uppercase;
+    }
+
+    .panel-body { padding: 20px; }
+
+    /* ─── IOC QUERY FORM ─── */
+    .query-form {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .ioc-input-wrap { position: relative; }
+
+    .ioc-input {
+      width: 100%;
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 14px 16px;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .ioc-input::placeholder { color: var(--text-dim); }
+
+    .ioc-input:focus {
+      border-color: var(--cyan-dim);
+      box-shadow: 0 0 0 1px rgba(0,200,255,0.1), inset 0 0 20px rgba(0,200,255,0.03);
+    }
+
+    .select-type {
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 14px 12px;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      outline: none;
+      cursor: pointer;
+      min-width: 120px;
+    }
+
+    .select-type:focus { border-color: var(--cyan-dim); }
+
+    .btn-query {
+      padding: 14px 28px;
+      background: linear-gradient(135deg, rgba(0,200,255,0.2), rgba(0,200,255,0.05));
+      border: 1px solid var(--cyan);
+      border-radius: 2px;
+      color: var(--cyan);
+      font-family: var(--font-head);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-query:hover { box-shadow: var(--glow-cyan); }
+    .btn-query:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ─── RESULT CARD ─── */
+    .result-card {
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 24px;
+      margin-top: 20px;
+      position: relative;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      align-items: start;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .result-ioc {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .result-meta {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+    }
+
+    .risk-badge {
+      text-align: center;
+      padding: 12px 20px;
+      border-radius: 2px;
+    }
+
+    .risk-badge.critical { background: rgba(255,59,92,0.1); border: 1px solid rgba(255,59,92,0.4); }
+    .risk-badge.high { background: rgba(255,140,0,0.1); border: 1px solid rgba(255,140,0,0.4); }
+    .risk-badge.medium { background: rgba(255,230,0,0.1); border: 1px solid rgba(255,230,0,0.3); }
+    .risk-badge.low { background: rgba(0,255,140,0.1); border: 1px solid rgba(0,255,140,0.3); }
+    .risk-badge.clean { background: rgba(0,200,255,0.1); border: 1px solid rgba(0,200,255,0.3); }
+
+    .risk-score {
+      font-family: var(--font-head);
+      font-size: 40px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .risk-badge.critical .risk-score { color: var(--red); text-shadow: var(--glow-red); }
+    .risk-badge.high .risk-score { color: var(--orange); }
+    .risk-badge.medium .risk-score { color: var(--yellow); }
+    .risk-badge.low .risk-score { color: var(--green); text-shadow: var(--glow-green); }
+    .risk-badge.clean .risk-score { color: var(--cyan); }
+
+    .risk-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 2px;
+      margin-top: 4px;
+    }
+
+    .risk-badge.critical .risk-label { color: var(--red); }
+    .risk-badge.high .risk-label { color: var(--orange); }
+    .risk-badge.medium .risk-label { color: var(--yellow); }
+    .risk-badge.low .risk-label { color: var(--green); }
+    .risk-badge.clean .risk-label { color: var(--cyan); }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .result-section-title {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .result-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .feed-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .feed-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+    }
+
+    .feed-name {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      flex: 1;
+    }
+
+    .feed-score {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+
+    .feed-latency {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .feed-status {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+    }
+    .feed-status.success { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .feed-status.error { background: var(--red); }
+    .feed-status.partial { background: var(--orange); }
+
+    .mitre-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .mitre-item {
+      padding: 8px 12px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--purple);
+      border-radius: 2px;
+    }
+
+    .mitre-id {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--purple);
+      margin-bottom: 2px;
+    }
+
+    .mitre-name {
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+
+    .mitre-tactic {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .geo-block {
+      padding: 12px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+    }
+
+    .geo-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+    .geo-row:last-child { border-bottom: none; }
+    .geo-key { color: var(--text-dim); }
+    .geo-val { color: var(--text-primary); }
+
+    /* ─── TABLE ─── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table th {
+      padding: 10px 14px;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .data-table td {
+      padding: 12px 14px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .data-table tr:hover td { background: rgba(0,200,255,0.03); color: var(--text-primary); }
+
+    .ioc-val {
+      color: var(--cyan);
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .ioc-val:hover { text-decoration: underline; }
+
+    .score-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 2px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .score-pill.critical { background: rgba(255,59,92,0.15); color: var(--red); border: 1px solid rgba(255,59,92,0.3); }
+    .score-pill.high { background: rgba(255,140,0,0.15); color: var(--orange); border: 1px solid rgba(255,140,0,0.3); }
+    .score-pill.medium { background: rgba(255,230,0,0.1); color: var(--yellow); border: 1px solid rgba(255,230,0,0.2); }
+    .score-pill.low { background: rgba(0,255,140,0.1); color: var(--green); border: 1px solid rgba(0,255,140,0.2); }
+    .score-pill.clean { background: rgba(0,200,255,0.1); color: var(--cyan); border: 1px solid rgba(0,200,255,0.2); }
+
+    /* ─── LOADING ─── */
+    .loading-bar {
+      width: 100%;
+      height: 2px;
+      background: var(--border);
+      border-radius: 1px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .loading-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      animation: loadBar 1.5s ease infinite;
+    }
+
+    @keyframes loadBar {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(200%); }
+    }
+
+    .loading-state {
+      text-align: center;
+      padding: 40px;
+    }
+
+    .loading-spinner {
+      width: 48px;
+      height: 48px;
+      border: 2px solid var(--border);
+      border-top-color: var(--cyan);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      letter-spacing: 2px;
+      animation: flicker 2s infinite;
+    }
+
+    @keyframes flicker {
+      0%, 95%, 100% { opacity: 1; }
+      96% { opacity: 0.3; }
+      97% { opacity: 0.9; }
+      98% { opacity: 0.2; }
+    }
+
+    /* ─── THREAT FEED STREAM ─── */
+    .feed-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .feed-stream::-webkit-scrollbar { width: 4px; }
+    .feed-stream::-webkit-scrollbar-track { background: var(--bg-deep); }
+    .feed-stream::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .stream-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      animation: slideIn 0.3s ease;
+    }
+
+    .stream-time { color: var(--text-dim); min-width: 75px; }
+    .stream-ioc { color: var(--cyan); min-width: 130px; }
+    .stream-type {
+      min-width: 50px;
+      color: var(--text-secondary);
+      font-size: 9px;
+      letter-spacing: 1px;
+    }
+    .stream-verdict { flex: 1; }
+    .stream-verdict.malicious { color: var(--red); }
+    .stream-verdict.suspicious { color: var(--orange); }
+    .stream-verdict.clean { color: var(--green); }
+
+    /* ─── CHARTS ─── */
+    .chart-container { position: relative; }
+
+    .bar-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .bar-row { display: flex; align-items: center; gap: 12px; }
+
+    .bar-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-secondary);
+      min-width: 80px;
+      text-align: right;
+    }
+
+    .bar-track {
+      flex: 1;
+      height: 6px;
+      background: var(--bg-deep);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 1s ease;
+    }
+
+    .bar-val {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-dim);
+      min-width: 35px;
+    }
+
+    /* ─── ALERTS ─── */
+    .alert-item {
+      display: flex;
+      gap: 14px;
+      padding: 14px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .alert-item:last-child { border-bottom: none; }
+    .alert-item:hover { background: rgba(0,200,255,0.03); }
+
+    .alert-severity {
+      width: 4px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .alert-severity.critical { background: var(--red); box-shadow: 0 0 8px var(--red); }
+    .alert-severity.high { background: var(--orange); }
+    .alert-severity.medium { background: var(--yellow); }
+    .alert-severity.low { background: var(--green); }
+
+    .alert-content { flex: 1; }
+
+    .alert-title {
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 3px;
+    }
+
+    .alert-desc {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .alert-time {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    /* ─── HEALTH VIEW ─── */
+    .health-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .health-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 18px;
+      text-align: center;
+    }
+
+    .health-icon { font-size: 28px; margin-bottom: 10px; }
+
+    .health-name {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .health-status {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 2px;
+      font-weight: 700;
+    }
+    .health-status.healthy { color: var(--green); }
+    .health-status.degraded { color: var(--orange); }
+    .health-status.down { color: var(--red); }
+    .health-status.unknown { color: var(--text-dim); }
+
+    .health-latency {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    /* ─── SETTINGS ─── */
+    .settings-section { margin-bottom: 28px; }
+
+    .settings-title {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--cyan-dim);
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .setting-key {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .setting-desc {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    .toggle {
+      width: 40px;
+      height: 22px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .toggle.on {
+      background: rgba(0,200,255,0.2);
+      border-color: var(--cyan-dim);
+    }
+
+    .toggle::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 14px;
+      height: 14px;
+      background: var(--text-dim);
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+
+    .toggle.on::after {
+      left: 21px;
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
+    }
+
+    /* ─── PAGINATION ─── */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .pagination-info {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .pagination-btns { display: flex; gap: 6px; }
+
+    .page-btn {
+      width: 32px;
+      height: 32px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .page-btn:hover { border-color: var(--cyan-dim); color: var(--cyan); }
+    .page-btn.active { background: rgba(0,200,255,0.1); border-color: var(--cyan); color: var(--cyan); }
+
+    /* ─── MINI CHART ─── */
+    .sparkline { display: flex; align-items: flex-end; gap: 3px; height: 30px; }
+    .spark-bar {
+      flex: 1;
+      background: rgba(0,200,255,0.3);
+      border-radius: 1px;
+      min-height: 2px;
+      transition: background 0.2s;
+    }
+    .spark-bar:hover { background: var(--cyan); }
+    .spark-bar.red { background: rgba(255,59,92,0.4); }
+    .spark-bar.red:hover { background: var(--red); }
+
+    /* ─── TOOLTIP ─── */
+    .tooltip-wrap { position: relative; }
+    .tooltip-wrap:hover .tooltip { display: block; }
+    .tooltip {
+      display: none;
+      position: absolute;
+      bottom: 110%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 6px 10px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-primary);
+      white-space: nowrap;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    /* ─── RESPONSIVE ─── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-void); }
+    ::-webkit-scrollbar-thumb { background: var(--bg-card); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border); }
+
+    /* ─── PULSE RING ─── */
+    .pulse-ring {
+      position: relative;
+      display: inline-block;
+    }
+    .pulse-ring::before {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 1px solid var(--green);
+      opacity: 0;
+      animation: ring 2s infinite;
+    }
+    @keyframes ring {
+      0% { transform: scale(1); opacity: 0.6; }
+      100% { transform: scale(2); opacity: 0; }
+    }
+
+    /* Input validation */
+    .input-error { border-color: rgba(255,59,92,0.5) !important; }
+    .input-valid { border-color: rgba(0,255,140,0.4) !important; }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 2px;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .tag-ip { background: rgba(0,200,255,0.1); color: var(--cyan); border: 1px solid rgba(0,200,255,0.2); }
+    .tag-domain { background: rgba(155,89,255,0.1); color: var(--purple); border: 1px solid rgba(155,89,255,0.2); }
+    .tag-hash { background: rgba(255,140,0,0.1); color: var(--orange); border: 1px solid rgba(255,140,0,0.2); }
+    .tag-email { background: rgba(0,255,140,0.1); color: var(--green); border: 1px solid rgba(0,255,140,0.2); }
+  </style>
+</head>
+<body>
+
+<!-- ══════════ AUTH PAGE ══════════ -->
+<div id="auth-page" class="page active">
+  <div class="auth-wrapper">
+    <div class="iris-logo">
+      <div class="iris-eye">
+        <svg viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="35" cy="35" r="32" stroke="#00c8ff" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.4"/>
+          <circle cx="35" cy="35" r="24" stroke="#00c8ff" stroke-width="1" opacity="0.6"/>
+          <circle cx="35" cy="35" r="14" fill="rgba(0,200,255,0.08)" stroke="#00c8ff" stroke-width="1.5"/>
+          <circle cx="35" cy="35" r="6" fill="#00c8ff" opacity="0.9"/>
+          <circle cx="35" cy="35" r="3" fill="white" opacity="0.9"/>
+          <line x1="35" y1="3" x2="35" y2="11" stroke="#00c8ff" stroke-width="1" opacity="0.5"/>
+          <line x1="35" y1="59" x2="35" y2="67" stroke="#00c8ff" stroke-width="1" opacity="0.5"/>
+          <line x1="3" y1="35" x2="11" y2="35" stroke="#00c8ff" stroke-width="1" opacity="0.5"/>
+          <line x1="59" y1="35" x2="67" y2="35" stroke="#00c8ff" stroke-width="1" opacity="0.5"/>
+        </svg>
+      </div>
+      <h1>IRIS</h1>
+      <p>Intrusion Response &amp; Intelligence System</p>
+    </div>
+
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchTab('login')">Login</button>
+        <button class="auth-tab" onclick="switchTab('register')">Register</button>
+      </div>
+
+      <div id="auth-error" class="error-msg"></div>
+
+      <!-- Login Form -->
+      <div id="login-form">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" id="login-email" class="form-input" placeholder="analyst@example.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="login-password" class="form-input" placeholder="••••••••" />
+        </div>
+        <button class="btn-primary" onclick="doLogin()">Access System</button>
+      </div>
+
+      <!-- Register Form -->
+      <div id="register-form" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" id="reg-email" class="form-input" placeholder="analyst@example.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="reg-password" class="form-input" placeholder="Min 8 characters" />
+        </div>
+        <button class="btn-primary" onclick="doRegister()">Create Account</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MAIN APP ══════════ -->
+<div id="main-page" class="page">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div style="font-size:22px">👁</div>
+      <div>
+        <span>IRIS</span>
+        <div class="version">v1.0.0</div>
+      </div>
+    </div>
+
+    <div class="sidebar-status" id="sys-status">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status-text">ONLINE</span>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Operations</div>
+      <div class="nav-item active" onclick="showView('dashboard')">
+        <span class="nav-icon">⬡</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="showView('query')">
+        <span class="nav-icon">⌖</span> IoC Query
+      </div>
+      <div class="nav-item" onclick="showView('history')">
+        <span class="nav-icon">◷</span> History
+      </div>
+      <div class="nav-label">Intelligence</div>
+      <div class="nav-item" onclick="showView('alerts')">
+        <span class="nav-icon">⚡</span> Alerts
+        <span class="nav-badge" id="alert-badge">3</span>
+      </div>
+      <div class="nav-item" onclick="showView('feeds')">
+        <span class="nav-icon">⇌</span> Threat Feeds
+      </div>
+      <div class="nav-item" onclick="showView('mitre')">
+        <span class="nav-icon">◈</span> MITRE ATT&amp;CK
+      </div>
+      <div class="nav-label">System</div>
+      <div class="nav-item" onclick="showView('health')">
+        <span class="nav-icon">◉</span> System Health
+      </div>
+      <div class="nav-item" onclick="showView('settings')">
+        <span class="nav-icon">⚙</span> Settings
+      </div>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar">A</div>
+      <div class="user-info">
+        <div class="user-email" id="user-email-display">analyst@iris.sec</div>
+        <div class="user-tier">FREE TIER</div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()" title="Logout">⏻</button>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <main class="content">
+
+    <!-- ─── DASHBOARD ─── -->
+    <div id="view-dashboard" class="view active">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Command Center</div>
+          <div class="page-subtitle">REAL-TIME THREAT INTELLIGENCE OVERVIEW</div>
+        </div>
+        <div class="timestamp" id="dash-time"></div>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-card cyan">
+          <div class="metric-label">Total Queries</div>
+          <div class="metric-value" id="m-total">—</div>
+          <div class="metric-delta">All time</div>
+        </div>
+        <div class="metric-card red">
+          <div class="metric-label">High Risk IoCs</div>
+          <div class="metric-value" id="m-high">—</div>
+          <div class="metric-delta">Score ≥ 70</div>
+        </div>
+        <div class="metric-card green">
+          <div class="metric-label">Clean IoCs</div>
+          <div class="metric-value" id="m-clean">—</div>
+          <div class="metric-delta">Score &lt; 30</div>
+        </div>
+        <div class="metric-card orange">
+          <div class="metric-label">Active Feeds</div>
+          <div class="metric-value" id="m-feeds">5</div>
+          <div class="metric-delta">Connectors online</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <!-- Live Threat Stream -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">⚡ Live Threat Stream</div>
+            <div class="pulse-ring"><div class="status-dot"></div></div>
+          </div>
+          <div class="panel-body" style="padding:0">
+            <div class="feed-stream" id="threat-stream"></div>
+          </div>
+        </div>
+
+        <!-- Risk Distribution -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">◑ Risk Distribution</div>
+          </div>
+          <div class="panel-body">
+            <div class="bar-chart" id="risk-chart">
+              <div class="bar-row">
+                <div class="bar-label">CRITICAL</div>
+                <div class="bar-track"><div class="bar-fill" style="width:8%;background:var(--red)"></div></div>
+                <div class="bar-val">8%</div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-label">HIGH</div>
+                <div class="bar-track"><div class="bar-fill" style="width:22%;background:var(--orange)"></div></div>
+                <div class="bar-val">22%</div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-label">MEDIUM</div>
+                <div class="bar-track"><div class="bar-fill" style="width:35%;background:var(--yellow)"></div></div>
+                <div class="bar-val">35%</div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-label">LOW</div>
+                <div class="bar-track"><div class="bar-fill" style="width:20%;background:var(--green)"></div></div>
+                <div class="bar-val">20%</div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-label">CLEAN</div>
+                <div class="bar-track"><div class="bar-fill" style="width:15%;background:var(--cyan)"></div></div>
+                <div class="bar-val">15%</div>
+              </div>
+            </div>
+            <div style="margin-top:20px">
+              <div class="result-section-title">Query Activity (7d)</div>
+              <div class="sparkline" id="sparkline"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <!-- Recent Alerts -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">🔔 Recent Alerts</div>
+            <span onclick="showView('alerts')" style="cursor:pointer;font-family:var(--font-mono);font-size:10px;color:var(--cyan-dim)">VIEW ALL →</span>
+          </div>
+          <div id="dash-alerts"></div>
+        </div>
+
+        <!-- Feed Health Summary -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">◉ Feed Health</div>
+          </div>
+          <div class="panel-body">
+            <div id="dash-health"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── IOC QUERY ─── -->
+    <div id="view-query" class="view">
+      <div class="page-header">
+        <div>
+          <div class="page-title">IoC Query</div>
+          <div class="page-subtitle">CORRELATE INDICATORS OF COMPROMISE ACROSS ALL FEEDS</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">⌖ Submit Indicator</div>
+        </div>
+        <div class="panel-body">
+          <div class="query-form">
+            <div class="ioc-input-wrap">
+              <input type="text" id="ioc-input" class="ioc-input" placeholder="Enter IP, domain, hash, or email…" oninput="validateIOC(this)" />
+            </div>
+            <select id="ioc-type" class="select-type">
+              <option value="ip">IP Address</option>
+              <option value="domain">Domain</option>
+              <option value="hash">File Hash</option>
+              <option value="email">Email</option>
+            </select>
+            <button id="query-btn" class="btn-query" onclick="submitQuery()">Analyze</button>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap" id="example-iocs"></div>
+        </div>
+      </div>
+
+      <div id="query-loading" style="display:none">
+        <div class="loading-bar"><div class="loading-fill"></div></div>
+        <div class="loading-state">
+          <div class="loading-spinner"></div>
+          <div class="loading-text" id="loading-step">QUERYING THREAT FEEDS…</div>
+        </div>
+      </div>
+
+      <div id="query-result"></div>
+    </div>
+
+    <!-- ─── HISTORY ─── -->
+    <div id="view-history" class="view">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Query History</div>
+          <div class="page-subtitle">AUDIT TRAIL OF ALL INDICATOR LOOKUPS</div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <input type="text" id="history-search" class="form-input" placeholder="Search IoC…" oninput="filterHistory()" style="width:200px;padding:8px 12px;font-size:12px" />
+          <select id="history-filter" class="select-type" onchange="filterHistory()" style="min-width:100px">
+            <option value="">All</option>
+            <option value="ip">IP</option>
+            <option value="domain">Domain</option>
+            <option value="hash">Hash</option>
+            <option value="email">Email</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">◷ Query Log</div>
+          <div id="history-count" style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)"></div>
+        </div>
+        <div id="history-loading" class="loading-state" style="display:none">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">LOADING HISTORY…</div>
+        </div>
+        <table class="data-table" id="history-table">
+          <thead>
+            <tr>
+              <th>IoC Value</th>
+              <th>Type</th>
+              <th>Risk Score</th>
+              <th>Verdict</th>
+              <th>Queried At</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="history-body"></tbody>
+        </table>
+        <div class="pagination" id="history-pagination"></div>
+      </div>
+    </div>
+
+    <!-- ─── ALERTS ─── -->
+    <div id="view-alerts" class="view">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Threat Alerts</div>
+          <div class="page-subtitle">ACTIVE INTELLIGENCE SIGNALS & NOTIFICATIONS</div>
+        </div>
+        <button class="btn-query" style="font-size:11px;padding:8px 16px" onclick="markAllRead()">Mark All Read</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">⚡ Active Alerts</div>
+          <div style="display:flex;gap:8px">
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--red)">● CRITICAL (1)</span>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--orange)">● HIGH (2)</span>
+          </div>
+        </div>
+        <div id="alerts-list"></div>
+      </div>
+    </div>
+
+    <!-- ─── THREAT FEEDS ─── -->
+    <div id="view-feeds" class="view">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Threat Feed Connectors</div>
+          <div class="page-subtitle">EXTERNAL INTELLIGENCE SOURCE STATUS</div>
+        </div>
+      </div>
+
+      <div class="three-col" id="feeds-grid"></div>
+    </div>
+
+    <!-- ─── MITRE ATT&CK ─── -->
+    <div id="view-mitre" class="view">
+      <div class="page-header">
+        <div>
+          <div class="page-title">MITRE ATT&CK</div>
+          <div class="page-subtitle">TECHNIQUE COVERAGE & DETECTION MAPPING</div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:20px">
+        <div class="panel-header"><div class="panel-title">◈ Detected Techniques</div></div>
+        <div class="panel-body">
+          <div id="mitre-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px"></div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Tactic Distribution</div></div>
+          <div class="panel-body">
+            <div class="bar-chart" id="tactic-chart"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Top Techniques</div></div>
+          <div class="panel-body">
+            <div id="top-techniques"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── HEALTH ─── -->
+    <div id="view-health" class="view">
+      <div class="page-header">
+        <div>
+          <div class="page-title">System Health</div>
+          <div class="page-subtitle">INFRASTRUCTURE & FEED STATUS MONITORING</div>
+        </div>
+        <button class="btn-query" style="font-size:11px;padding:8px 16px" onclick="fetchHealth()">Refresh</button>
+      </div>
+
+      <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="metric-card cyan">
+          <div class="metric-label">Uptime</div>
+          <div class="metric-value" id="h-uptime" style="font-size:28px">—</div>
+          <div class="metric-delta">seconds</div>
+        </div>
+        <div class="metric-card green">
+          <div class="metric-label">Database</div>
+          <div class="metric-value" id="h-db" style="font-size:18px;padding-top:10px">—</div>
+          <div class="metric-delta">PostgreSQL</div>
+        </div>
+        <div class="metric-card green">
+          <div class="metric-label">Cache</div>
+          <div class="metric-value" id="h-redis" style="font-size:18px;padding-top:10px">—</div>
+          <div class="metric-delta">Redis</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">◉ Feed Connectors</div></div>
+        <div class="panel-body">
+          <div class="health-grid" id="health-feeds"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">System Information</div></div>
+        <div class="panel-body">
+          <div id="sys-info" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── SETTINGS ─── -->
+    <div id="view-settings" class="view">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Settings</div>
+          <div class="page-subtitle">PLATFORM CONFIGURATION & PREFERENCES</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-body">
+          <div class="settings-section">
+            <div class="settings-title">API Configuration</div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-key">Base API URL</div>
+                <div class="setting-desc">Backend endpoint for all requests</div>
+              </div>
+              <input type="text" id="set-api-url" class="form-input" value="http://localhost:3001" style="width:260px;padding:8px 12px;font-size:12px" onchange="saveSettings()" />
+            </div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-key">Auth Token</div>
+                <div class="setting-desc">Current session JWT</div>
+              </div>
+              <input type="text" class="form-input" id="set-token-display" readonly style="width:260px;padding:8px 12px;font-size:10px;color:var(--text-dim)" />
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-title">Feed Connectors</div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-key">VirusTotal</div>
+                <div class="setting-desc">Malware & URL analysis</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-key">AbuseIPDB</div>
+                <div class="setting-desc">IP reputation database</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-key">Shodan</div>
+                <div class="setting-desc">Internet device scanning</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-key">IPInfo</div>
+                <div class="setting-desc">Geolocation data</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-key">Abstract Email</div>
+                <div class="setting-desc">Email validation & reputation</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-title">Display Preferences</div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-key">Enable Sound Alerts</div>
+                <div class="setting-desc">Beep on high-severity detections</div>
+              </div>
+              <div class="toggle" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-key">Live Feed Stream</div>
+                <div class="setting-desc">Auto-update threat stream on dashboard</div>
+              </div>
+              <div class="toggle on" id="live-toggle" onclick="toggleLiveFeed(this)"></div>
+            </div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-key">Cache Results</div>
+                <div class="setting-desc">Use cached data when available</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-title">Account</div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-key" id="settings-email">analyst@example.com</div>
+                <div class="setting-desc">Logged in as FREE tier</div>
+              </div>
+              <button class="btn-query" style="font-size:11px;padding:8px 16px" onclick="doLogout()">Sign Out</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// IRIS FRONTEND — Complete Application Logic
+// ═══════════════════════════════════════════════
+
+const API = {
+  get base() { return localStorage.getItem('iris_api') || 'http://localhost:3001'; },
+  get token() { return localStorage.getItem('iris_token'); },
+  set token(t) { localStorage.setItem('iris_token', t); },
+
+  async req(method, path, body) {
+    const opts = {
+      method,
+      headers: { 'Content-Type': 'application/json' }
+    };
+    if (this.token) opts.headers['Authorization'] = `Bearer ${this.token}`;
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(this.base + path, opts);
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.message || data.error || 'Request failed');
+    return data;
+  },
+
+  get: (p) => API.req('GET', p),
+  post: (p, b) => API.req('POST', p, b),
+};
+
+// ─── State ───
+let state = {
+  user: null,
+  history: [],
+  historyPage: 1,
+  historyTotal: 0,
+  historyFilter: '',
+  historySearch: '',
+  liveInterval: null,
+  mockHistory: [],
+};
+
+// ─── Mock Data ───
+const mockAlerts = [
+  { sev:'critical', title:'APT Activity Detected', desc:'185.220.101.4 flagged across 3 feeds with C2 signature', time:'2m ago' },
+  { sev:'high', title:'Phishing Domain Detected', desc:'paypa1-secure.com matches known phishing pattern', time:'8m ago' },
+  { sev:'high', title:'Malicious Hash Identified', desc:'SHA256 matched to Emotet dropper variant', time:'24m ago' },
+  { sev:'medium', title:'Suspicious IP Queried', desc:'45.95.168.12 — multiple AbuseIPDB reports', time:'1h ago' },
+  { sev:'low', title:'Email Validation Failed', desc:'disposable-mail@temp.org flagged as throwaway', time:'2h ago' },
+];
+
+const mockFeeds = [
+  { name:'VirusTotal', icon:'🦠', desc:'Antivirus & sandbox analysis', latency:164, queries:1240, status:'healthy' },
+  { name:'AbuseIPDB', icon:'🛡', desc:'IP abuse confidence scoring', latency:98, queries:892, status:'healthy' },
+  { name:'Shodan', icon:'🔭', desc:'Internet-connected device intel', latency:210, queries:456, status:'healthy' },
+  { name:'IPInfo', icon:'🌐', desc:'Geolocation & ASN data', latency:72, queries:1100, status:'healthy' },
+  { name:'AbstractEmail', icon:'📧', desc:'Email reputation & validation', latency:145, queries:320, status:'degraded' },
+];
+
+const mitreData = [
+  { id:'T1071', name:'Application Layer Protocol', tactic:'Command and Control', count:14 },
+  { id:'T1190', name:'Exploit Public-Facing Application', tactic:'Initial Access', count:9 },
+  { id:'T1059', name:'Command and Scripting Interpreter', tactic:'Execution', count:7 },
+  { id:'T1486', name:'Data Encrypted for Impact', tactic:'Impact', count:5 },
+  { id:'T1110', name:'Brute Force', tactic:'Credential Access', count:12 },
+  { id:'T1566', name:'Phishing', tactic:'Initial Access', count:18 },
+  { id:'T1027', name:'Obfuscated Files or Information', tactic:'Defense Evasion', count:6 },
+  { id:'T1046', name:'Network Service Discovery', tactic:'Discovery', count:8 },
+];
+
+const streamItems = [
+  { ioc:'185.220.101.4', type:'IP', verdict:'malicious', score:91 },
+  { ioc:'paypa1-verify.com', type:'DOMAIN', verdict:'malicious', score:87 },
+  { ioc:'8.8.8.8', type:'IP', verdict:'clean', score:5 },
+  { ioc:'d41d8cd98f00b204e980...', type:'HASH', verdict:'suspicious', score:55 },
+  { ioc:'abuse@tempmail.org', type:'EMAIL', verdict:'suspicious', score:62 },
+  { ioc:'45.33.32.156', type:'IP', verdict:'malicious', score:78 },
+  { ioc:'legitimate-site.com', type:'DOMAIN', verdict:'clean', score:3 },
+  { ioc:'192.168.1.1', type:'IP', verdict:'clean', score:0 },
+];
+
+// ─── Helpers ───
+function riskClass(score) {
+  if (score >= 90) return 'critical';
+  if (score >= 70) return 'high';
+  if (score >= 40) return 'medium';
+  if (score >= 10) return 'low';
+  return 'clean';
+}
+
+function riskLabel(score) {
+  const c = riskClass(score);
+  return c.toUpperCase();
+}
+
+function fmt(date) {
+  return new Date(date).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+function timeNow() {
+  return new Date().toLocaleTimeString('en-US', { hour12: false });
+}
+
+function randomBetween(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+
+// ─── Auth ───
+function switchTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
+  document.getElementById('login-form').style.display = tab==='login' ? 'block' : 'none';
+  document.getElementById('register-form').style.display = tab==='register' ? 'block' : 'none';
+  document.getElementById('auth-error').style.display = 'none';
+}
+
+function showError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-password').value;
+  if (!email || !pass) return showError('Email and password required.');
+  try {
+    const data = await API.post('/api/v1/auth/login', { email, password: pass });
+    API.token = data.token;
+    state.user = { email: data.email, tier: data.tier, id: data.id };
+    enterApp();
+  } catch(e) {
+    showError(e.message || 'Login failed. Check credentials.');
+  }
+}
+
+async function doRegister() {
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-password').value;
+  if (!email || !pass) return showError('All fields required.');
+  if (pass.length < 8) return showError('Password must be at least 8 characters.');
+  try {
+    const data = await API.post('/api/v1/auth/register', { email, password: pass });
+    API.token = data.token;
+    state.user = { email: data.email, tier: data.tier, id: data.id };
+    enterApp();
+  } catch(e) {
+    showError(e.message || 'Registration failed.');
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem('iris_token');
+  state.user = null;
+  if (state.liveInterval) clearInterval(state.liveInterval);
+  document.getElementById('auth-page').classList.add('active');
+  document.getElementById('main-page').classList.remove('active');
+  document.getElementById('auth-error').style.display = 'none';
+}
+
+function enterApp() {
+  document.getElementById('auth-page').classList.remove('active');
+  document.getElementById('main-page').classList.add('active');
+  document.getElementById('user-email-display').textContent = state.user.email;
+  document.getElementById('user-avatar').textContent = state.user.email[0].toUpperCase();
+  document.getElementById('settings-email').textContent = state.user.email;
+  document.getElementById('set-token-display').value = API.token ? API.token.substring(0, 40) + '…' : '';
+  initDashboard();
+  fetchHealth();
+  loadHistory();
+}
+
+// ─── Navigation ───
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.textContent.trim().toLowerCase().startsWith(name.substring(0,4))) n.classList.add('active');
+  });
+  if (name === 'history') loadHistory();
+  if (name === 'health') fetchHealth();
+  if (name === 'feeds') renderFeeds();
+  if (name === 'mitre') renderMitre();
+  if (name === 'alerts') renderAlerts();
+}
+
+// ─── Dashboard ───
+function initDashboard() {
+  updateClock();
+  setInterval(updateClock, 1000);
+  renderSparkline();
+  renderDashAlerts();
+  renderDashHealth();
+  startLiveStream();
+  loadDashMetrics();
+}
+
+function updateClock() {
+  const el = document.getElementById('dash-time');
+  if (el) el.textContent = new Date().toUTCString().replace('GMT', 'UTC');
+}
+
+function renderSparkline() {
+  const vals = [12,18,8,25,32,19,28,35,22,41,38,29,44];
+  const max = Math.max(...vals);
+  const el = document.getElementById('sparkline');
+  if (!el) return;
+  el.innerHTML = vals.map((v,i) => {
+    const h = Math.round((v/max)*100);
+    return `<div class="spark-bar ${v > 30 ? 'red' : ''}" style="height:${h}%" title="${v} queries"></div>`;
+  }).join('');
+}
+
+function renderDashAlerts() {
+  const el = document.getElementById('dash-alerts');
+  if (!el) return;
+  el.innerHTML = mockAlerts.slice(0,3).map(a => `
+    <div class="alert-item" onclick="showView('alerts')">
+      <div class="alert-severity ${a.sev}"></div>
+      <div class="alert-content">
+        <div class="alert-title">${a.title}</div>
+        <div class="alert-desc">${a.desc}</div>
+      </div>
+      <div class="alert-time">${a.time}</div>
+    </div>
+  `).join('');
+}
+
+function renderDashHealth() {
+  const el = document.getElementById('dash-health');
+  if (!el) return;
+  el.innerHTML = mockFeeds.map(f => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:16px">${f.icon}</div>
+        <div>
+          <div style="font-family:var(--font-mono);font-size:12px;color:var(--text-primary)">${f.name}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim)">${f.latency}ms avg</div>
+        </div>
+      </div>
+      <div class="health-status ${f.status}">${f.status.toUpperCase()}</div>
+    </div>
+  `).join('');
+}
+
+function startLiveStream() {
+  const el = document.getElementById('threat-stream');
+  if (!el) return;
+  let idx = 0;
+  const addItem = () => {
+    const item = streamItems[idx % streamItems.length];
+    idx++;
+    const div = document.createElement('div');
+    div.className = 'stream-item';
+    div.innerHTML = `
+      <span class="stream-time">${timeNow()}</span>
+      <span class="stream-ioc">${item.ioc}</span>
+      <span class="stream-type">${item.type}</span>
+      <span class="stream-verdict ${item.verdict}">${item.verdict.toUpperCase()} [${item.score}]</span>
+    `;
+    el.insertBefore(div, el.firstChild);
+    if (el.children.length > 20) el.removeChild(el.lastChild);
+  };
+  addItem();
+  state.liveInterval = setInterval(addItem, 3000);
+}
+
+async function loadDashMetrics() {
+  try {
+    const data = await API.get('/api/v1/query/history?page=1&pageSize=100');
+    const items = data.items || [];
+    document.getElementById('m-total').textContent = data.total || items.length;
+    document.getElementById('m-high').textContent = items.filter(i => i.riskScore >= 70).length;
+    document.getElementById('m-clean').textContent = items.filter(i => i.riskScore < 30).length;
+  } catch {
+    // Fallback to demo numbers
+    document.getElementById('m-total').textContent = randomBetween(80,200);
+    document.getElementById('m-high').textContent = randomBetween(12,40);
+    document.getElementById('m-clean').textContent = randomBetween(20,60);
+  }
+}
+
+// ─── IoC Query ───
+const exampleIOCs = [
+  { val:'8.8.8.8', type:'ip' },
+  { val:'185.220.101.4', type:'ip' },
+  { val:'malware.example.com', type:'domain' },
+  { val:'test@gmail.com', type:'email' },
+];
+
+function initQueryExamples() {
+  const el = document.getElementById('example-iocs');
+  if (!el) return;
+  el.innerHTML = '<span style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">Examples:</span>' +
+    exampleIOCs.map(e => `
+      <span style="cursor:pointer;font-family:var(--font-mono);font-size:11px;color:var(--cyan-dim);border:1px solid var(--border);padding:3px 10px;border-radius:2px;"
+        onclick="document.getElementById('ioc-input').value='${e.val}';document.getElementById('ioc-type').value='${e.type}'">
+        ${e.val}
+      </span>
+    `).join('');
+}
+
+function validateIOC(el) {
+  const val = el.value.trim();
+  if (!val) { el.className = 'ioc-input'; return; }
+  const ipRx = /^(\d{1,3}\.){3}\d{1,3}$/;
+  const domRx = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/;
+  const hashRx = /^[a-fA-F0-9]{32,64}$/;
+  const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const valid = ipRx.test(val) || domRx.test(val) || hashRx.test(val) || emailRx.test(val);
+  el.className = 'ioc-input ' + (valid ? 'input-valid' : 'input-error');
+  // Auto-detect type
+  if (ipRx.test(val)) document.getElementById('ioc-type').value = 'ip';
+  else if (emailRx.test(val)) document.getElementById('ioc-type').value = 'email';
+  else if (hashRx.test(val)) document.getElementById('ioc-type').value = 'hash';
+  else if (domRx.test(val)) document.getElementById('ioc-type').value = 'domain';
+}
+
+const loadingSteps = [
+  'INITIALIZING QUERY…',
+  'QUERYING VIRUSTOTAL…',
+  'QUERYING ABUSEIPDB…',
+  'QUERYING SHODAN…',
+  'QUERYING IPINFO…',
+  'CORRELATING RESULTS…',
+  'COMPUTING RISK SCORE…',
+  'MAPPING MITRE TECHNIQUES…',
+  'BUILDING THREAT PROFILE…',
+];
+
+async function submitQuery() {
+  const ioc = document.getElementById('ioc-input').value.trim();
+  const type = document.getElementById('ioc-type').value;
+  if (!ioc) return;
+
+  document.getElementById('query-btn').disabled = true;
+  document.getElementById('query-loading').style.display = 'block';
+  document.getElementById('query-result').innerHTML = '';
+
+  let step = 0;
+  const stepInterval = setInterval(() => {
+    document.getElementById('loading-step').textContent = loadingSteps[step % loadingSteps.length];
+    step++;
+  }, 400);
+
+  try {
+    const data = await API.post('/api/v1/query', { ioc, type });
+    clearInterval(stepInterval);
+    document.getElementById('query-loading').style.display = 'none';
+    renderResult(data);
+    addToMockHistory(data);
+  } catch(e) {
+    clearInterval(stepInterval);
+    document.getElementById('query-loading').style.display = 'none';
+    // Show demo result on API failure
+    renderResult(generateMockResult(ioc, type));
+  } finally {
+    document.getElementById('query-btn').disabled = false;
+  }
+}
+
+function generateMockResult(ioc, type) {
+  const score = randomBetween(0, 100);
+  return {
+    queryId: 'demo-' + Date.now(),
+    ioc, type,
+    riskScore: score,
+    riskLevel: riskLabel(score),
+    verdict: score >= 70 ? 'Malicious' : score >= 40 ? 'Suspicious' : 'Clean',
+    feeds: [
+      { feedName:'VirusTotal', status:'success', confidenceScore: randomBetween(0,100), latencyMs: randomBetween(80,300) },
+      { feedName:'AbuseIPDB', status:'success', confidenceScore: randomBetween(0,100), latencyMs: randomBetween(50,150) },
+      { feedName:'Shodan', status: type==='ip' ? 'success' : 'partial', confidenceScore: randomBetween(0,100), latencyMs: randomBetween(100,400) },
+      { feedName:'IPInfo', status: type==='ip' ? 'success' : 'partial', confidenceScore: randomBetween(0,100), latencyMs: randomBetween(40,120) },
+      { feedName:'AbstractEmail', status: type==='email' ? 'success' : 'partial', confidenceScore: randomBetween(0,100), latencyMs: randomBetween(80,200) },
+    ],
+    mitreTechniques: score >= 50 ? [
+      { id:'T1071', name:'Application Layer Protocol', tactic:'Command and Control' },
+      { id:'T1110', name:'Brute Force', tactic:'Credential Access' },
+    ] : [],
+    geoLocation: type==='ip' ? { country:'US', city:'Mountain View', org:'AS15169 Google LLC', asn:'AS15169' } : null,
+    queryDurationMs: randomBetween(200, 800),
+    cachedAt: null,
+    _demo: true,
+  };
+}
+
+function addToMockHistory(result) {
+  state.mockHistory.unshift({
+    id: result.queryId,
+    iocValue: result.ioc,
+    iocType: result.type,
+    riskScore: result.riskScore,
+    verdict: result.verdict,
+    queriedAt: new Date().toISOString(),
+  });
+}
+
+function renderResult(data) {
+  const rc = riskClass(data.riskScore);
+  const html = `
+    <div class="result-card">
+      ${data._demo ? `<div style="font-family:var(--font-mono);font-size:10px;color:var(--orange);margin-bottom:14px;padding:8px 12px;background:rgba(255,140,0,0.08);border:1px solid rgba(255,140,0,0.2);border-radius:2px">⚠ Demo mode — backend not reachable. Showing simulated results.</div>` : ''}
+      <div class="result-header">
+        <div>
+          <div class="result-ioc">${data.ioc}</div>
+          <div class="result-meta">TYPE: ${data.type?.toUpperCase()} &nbsp;|&nbsp; ID: ${data.queryId} &nbsp;|&nbsp; ${data.queryDurationMs}ms</div>
+          ${data.cachedAt ? `<div class="result-meta" style="color:var(--cyan-dim)">⚡ Cached result from ${fmt(data.cachedAt)}</div>` : ''}
+        </div>
+        <div class="risk-badge ${rc}">
+          <div class="risk-score">${data.riskScore}</div>
+          <div class="risk-label">${data.riskLevel || riskLabel(data.riskScore)}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-top:4px">${data.verdict}</div>
+        </div>
+      </div>
+
+      <div class="result-grid">
+        <div>
+          <div class="result-section-title">Feed Results</div>
+          <div class="feed-list">
+            ${(data.feeds||[]).map(f => `
+              <div class="feed-item">
+                <div class="feed-status ${f.status}"></div>
+                <div class="feed-name">${f.feedName}</div>
+                <div class="feed-score">${f.confidenceScore ?? '—'}</div>
+                <div class="feed-latency">${f.latencyMs}ms</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div>
+          <div class="result-section-title">MITRE Techniques</div>
+          ${(data.mitreTechniques||[]).length ? `
+            <div class="mitre-list">
+              ${(data.mitreTechniques||[]).map(t => `
+                <div class="mitre-item">
+                  <div class="mitre-id">${t.id}</div>
+                  <div class="mitre-name">${t.name}</div>
+                  <div class="mitre-tactic">${t.tactic}</div>
+                </div>
+              `).join('')}
+            </div>
+          ` : '<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);padding:12px">No techniques mapped</div>'}
+        </div>
+
+        <div>
+          <div class="result-section-title">Geo / Context</div>
+          ${data.geoLocation ? `
+            <div class="geo-block">
+              <div class="geo-row"><span class="geo-key">Country</span><span class="geo-val">${data.geoLocation.country || '—'}</span></div>
+              <div class="geo-row"><span class="geo-key">City</span><span class="geo-val">${data.geoLocation.city || '—'}</span></div>
+              ${data.geoLocation.org ? `<div class="geo-row"><span class="geo-key">Org</span><span class="geo-val">${data.geoLocation.org}</span></div>` : ''}
+              ${data.geoLocation.asn ? `<div class="geo-row"><span class="geo-key">ASN</span><span class="geo-val">${data.geoLocation.asn}</span></div>` : ''}
+            </div>
+          ` : '<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);padding:12px">No geo data available</div>'}
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+        <button class="btn-query" style="font-size:11px;padding:8px 16px" onclick="copyResult('${data.queryId}')">⧉ Copy JSON</button>
+        <button class="btn-query" style="font-size:11px;padding:8px 16px" onclick="showView('history')">◷ View in History</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('query-result').innerHTML = html;
+  window._lastResult = data;
+}
+
+function copyResult(id) {
+  if (window._lastResult) {
+    navigator.clipboard.writeText(JSON.stringify(window._lastResult, null, 2));
+  }
+}
+
+// ─── History ───
+async function loadHistory() {
+  const el = document.getElementById('history-body');
+  const loadEl = document.getElementById('history-loading');
+  if (!el) return;
+  loadEl.style.display = 'block';
+  el.innerHTML = '';
+
+  try {
+    const { page, historySearch: s, historyFilter: f } = state;
+    const data = await API.get(`/api/v1/query/history?page=${state.historyPage}&pageSize=10`);
+    state.history = data.items || [];
+    state.historyTotal = data.total || 0;
+    loadEl.style.display = 'none';
+    renderHistory();
+  } catch {
+    // Use mock data
+    loadEl.style.display = 'none';
+    state.history = generateMockHistory();
+    state.historyTotal = state.history.length;
+    renderHistory();
+  }
+}
+
+function generateMockHistory() {
+  const types = ['ip','domain','hash','email'];
+  const iocs = ['185.220.101.4','paypa1-secure.com','d41d8cd98f00b204...','abuse@temp.org','8.8.8.8','github.com','test@gmail.com','45.33.32.156'];
+  return Array.from({length:20}, (_,i) => ({
+    id: 'q-' + (i+1),
+    iocValue: iocs[i % iocs.length],
+    iocType: types[i % types.length],
+    riskScore: randomBetween(0, 100),
+    verdict: ['Malicious','Suspicious','Clean','Unknown'][i%4],
+    queriedAt: new Date(Date.now() - i * 3600000).toISOString(),
+  })).concat(state.mockHistory);
+}
+
+function filterHistory() {
+  state.historySearch = document.getElementById('history-search').value.toLowerCase();
+  state.historyFilter = document.getElementById('history-filter').value;
+  state.historyPage = 1;
+  renderHistory();
+}
+
+function renderHistory() {
+  const body = document.getElementById('history-body');
+  const countEl = document.getElementById('history-count');
+  if (!body) return;
+
+  let items = state.history;
+  if (state.historySearch) items = items.filter(i => i.iocValue.toLowerCase().includes(state.historySearch));
+  if (state.historyFilter) items = items.filter(i => i.iocType === state.historyFilter);
+
+  if (countEl) countEl.textContent = `${items.length} results`;
+
+  body.innerHTML = items.slice(0, 10).map(item => {
+    const rc = riskClass(item.riskScore);
+    return `
+      <tr>
+        <td><span class="ioc-val" onclick="replayQuery('${item.iocValue}','${item.iocType}')">${item.iocValue}</span></td>
+        <td><span class="tag tag-${item.iocType}">${item.iocType}</span></td>
+        <td><span class="score-pill ${rc}">${item.riskScore}</span></td>
+        <td style="color:${rc==='critical'||rc==='high'?'var(--red)':rc==='medium'?'var(--orange)':rc==='low'?'var(--green)':'var(--cyan)'}">${item.verdict || riskLabel(item.riskScore)}</td>
+        <td>${fmt(item.queriedAt)}</td>
+        <td>
+          <button class="btn-query" style="font-size:10px;padding:4px 10px" onclick="replayQuery('${item.iocValue}','${item.iocType}')">Re-analyze</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  renderPagination();
+}
+
+function replayQuery(ioc, type) {
+  showView('query');
+  setTimeout(() => {
+    document.getElementById('ioc-input').value = ioc;
+    document.getElementById('ioc-type').value = type;
+    submitQuery();
+  }, 100);
+}
+
+function renderPagination() {
+  const el = document.getElementById('history-pagination');
+  if (!el) return;
+  const total = state.historyTotal;
+  const page = state.historyPage;
+  const pages = Math.ceil(total / 10) || 1;
+  el.innerHTML = `
+    <div class="pagination-info">Showing ${(page-1)*10+1}–${Math.min(page*10, total)} of ${total}</div>
+    <div class="pagination-btns">
+      ${page > 1 ? `<button class="page-btn" onclick="changePage(${page-1})">‹</button>` : ''}
+      ${Array.from({length:Math.min(pages,5)},(_,i)=>i+1).map(p =>
+        `<button class="page-btn ${p===page?'active':''}" onclick="changePage(${p})">${p}</button>`
+      ).join('')}
+      ${page < pages ? `<button class="page-btn" onclick="changePage(${page+1})">›</button>` : ''}
+    </div>
+  `;
+}
+
+function changePage(p) {
+  state.historyPage = p;
+  loadHistory();
+}
+
+// ─── Alerts ───
+function renderAlerts() {
+  const el = document.getElementById('alerts-list');
+  if (!el) return;
+  el.innerHTML = mockAlerts.map(a => `
+    <div class="alert-item">
+      <div class="alert-severity ${a.sev}"></div>
+      <div class="alert-content">
+        <div class="alert-title">${a.title}</div>
+        <div class="alert-desc">${a.desc}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+        <div class="alert-time">${a.time}</div>
+        <span class="score-pill ${a.sev}">${a.sev.toUpperCase()}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function markAllRead() {
+  document.getElementById('alert-badge').style.display = 'none';
+  renderAlerts();
+}
+
+// ─── Feeds ───
+function renderFeeds() {
+  const el = document.getElementById('feeds-grid');
+  if (!el) return;
+  el.innerHTML = mockFeeds.map(f => `
+    <div class="panel" style="margin:0">
+      <div class="panel-header" style="gap:10px">
+        <span style="font-size:22px">${f.icon}</span>
+        <div>
+          <div class="panel-title">${f.name}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim)">${f.desc}</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="geo-block" style="margin-bottom:12px">
+          <div class="geo-row"><span class="geo-key">Status</span><span class="geo-val health-status ${f.status}" style="font-size:11px">${f.status.toUpperCase()}</span></div>
+          <div class="geo-row"><span class="geo-key">Avg Latency</span><span class="geo-val">${f.latency}ms</span></div>
+          <div class="geo-row"><span class="geo-key">Total Queries</span><span class="geo-val">${f.queries.toLocaleString()}</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="feed-status ${f.status==='healthy'?'success':f.status==='degraded'?'partial':'error'}"></div>
+          <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">Last checked: ${timeNow()}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─── MITRE ───
+function renderMitre() {
+  const grid = document.getElementById('mitre-grid');
+  const tactChart = document.getElementById('tactic-chart');
+  const topEl = document.getElementById('top-techniques');
+  if (!grid) return;
+
+  grid.innerHTML = mitreData.map(t => `
+    <div class="mitre-item" style="cursor:pointer" title="${t.tactic}">
+      <div class="mitre-id">${t.id}</div>
+      <div class="mitre-name" style="font-size:12px">${t.name}</div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px">
+        <div class="mitre-tactic">${t.tactic}</div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--cyan)">${t.count}×</div>
+      </div>
+    </div>
+  `).join('');
+
+  const tactics = {};
+  mitreData.forEach(t => { tactics[t.tactic] = (tactics[t.tactic]||0) + t.count; });
+  const maxT = Math.max(...Object.values(tactics));
+  const colors = ['var(--red)','var(--orange)','var(--yellow)','var(--green)','var(--cyan)','var(--purple)'];
+  tactChart.innerHTML = Object.entries(tactics).map(([k,v],i) => `
+    <div class="bar-row">
+      <div class="bar-label" style="font-size:9px;min-width:120px">${k}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxT*100)}%;background:${colors[i%colors.length]}"></div></div>
+      <div class="bar-val">${v}</div>
+    </div>
+  `).join('');
+
+  const sorted = [...mitreData].sort((a,b) => b.count - a.count);
+  topEl.innerHTML = sorted.slice(0,5).map((t,i) => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="font-family:var(--font-head);font-size:18px;font-weight:800;color:var(--text-dim);min-width:24px">${i+1}</div>
+      <div style="flex:1">
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--cyan)">${t.id}</div>
+        <div style="font-family:var(--font-body);font-size:13px;color:var(--text-primary)">${t.name}</div>
+      </div>
+      <div style="font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--text-primary)">${t.count}</div>
+    </div>
+  `).join('');
+}
+
+// ─── Health ───
+async function fetchHealth() {
+  try {
+    const data = await API.get('/health');
+    document.getElementById('h-uptime').textContent = Math.floor(data.uptime);
+    document.getElementById('h-db').textContent = (data.db || 'unknown').toUpperCase();
+    document.getElementById('h-redis').textContent = (data.redis || 'unknown').toUpperCase();
+    document.getElementById('status-text').textContent = 'ONLINE';
+    document.getElementById('status-dot').classList.remove('offline');
+    renderFeedHealth(data.feeds || {});
+    renderSysInfo(data);
+  } catch {
+    document.getElementById('status-text').textContent = 'OFFLINE';
+    document.getElementById('status-dot').classList.add('offline');
+    renderFeedHealth({});
+    renderSysInfoFallback();
+  }
+}
+
+function renderFeedHealth(feeds) {
+  const el = document.getElementById('health-feeds');
+  if (!el) return;
+  const icons = { VirusTotal:'🦠', AbuseIPDB:'🛡', Shodan:'🔭', IPInfo:'🌐', AbstractEmail:'📧' };
+  const names = Object.keys(icons);
+  el.innerHTML = names.map(n => {
+    const st = feeds[n] || 'unknown';
+    return `
+      <div class="health-card">
+        <div class="health-icon">${icons[n]}</div>
+        <div class="health-name">${n}</div>
+        <div class="health-status ${st === 'healthy' ? 'healthy' : st === 'unknown' ? 'unknown' : 'degraded'}">${st.toUpperCase()}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderSysInfo(data) {
+  const el = document.getElementById('sys-info');
+  if (!el) return;
+  const rows = [
+    ['Version', data.version || '1.0.0'],
+    ['Environment', 'Production'],
+    ['Timestamp', fmt(data.timestamp || new Date())],
+    ['API Base', API.base],
+  ];
+  el.innerHTML = rows.map(([k,v]) => `
+    <div class="geo-block">
+      <div class="geo-key" style="font-size:9px;letter-spacing:1px;margin-bottom:4px">${k}</div>
+      <div class="geo-val" style="font-size:13px">${v}</div>
+    </div>
+  `).join('');
+}
+
+function renderSysInfoFallback() {
+  renderFeedHealth({ VirusTotal:'unknown', AbuseIPDB:'unknown', Shodan:'unknown', IPInfo:'unknown', AbstractEmail:'unknown' });
+  const el = document.getElementById('sys-info');
+  if (el) el.innerHTML = `<div style="font-family:var(--font-mono);font-size:11px;color:var(--red);grid-column:1/-1;padding:12px">Backend unreachable — using demo mode</div>`;
+  ['h-uptime','h-db','h-redis'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '—';
+  });
+}
+
+// ─── Settings ───
+function saveSettings() {
+  const url = document.getElementById('set-api-url').value.trim();
+  if (url) localStorage.setItem('iris_api', url);
+}
+
+function toggleLiveFeed(el) {
+  el.classList.toggle('on');
+  if (el.classList.contains('on')) {
+    startLiveStream();
+  } else {
+    if (state.liveInterval) { clearInterval(state.liveInterval); state.liveInterval = null; }
+  }
+}
+
+// ─── Init ───
+window.addEventListener('DOMContentLoaded', () => {
+  initQueryExamples();
+  // Auto-login if token exists
+  const token = localStorage.getItem('iris_token');
+  if (token) {
+    API.token = token;
+    state.user = { email: localStorage.getItem('iris_email') || 'analyst@iris.sec', tier: 'free' };
+    enterApp();
+  }
+  // Keyboard shortcut: Enter to submit query
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('ioc-input') === document.activeElement) {
+      submitQuery();
+    }
+  });
+});
+</script>
+</body>
+</html>
