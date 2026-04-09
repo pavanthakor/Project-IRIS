@@ -1,0 +1,23 @@
+{
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/strict"],
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
+  "rules": {
+    "no-console": "error",
+    "@typescript-eslint/no-explicit-any": "error",
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": "error",
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "TaggedTemplateExpression[tag.property.name=/^query$/] TemplateElement",
+        "message": "Do not use template literals in .query() calls — use parameterised queries ($1, $2, …) to prevent SQL injection."
+      },
+      {
+        "selector": "CallExpression[callee.property.name=/^query$/] > TemplateLiteral",
+        "message": "Do not use template literals in .query() calls — use parameterised queries ($1, $2, …) to prevent SQL injection."
+      }
+    ]
+  },
+  "env": { "node": true, "es2022": true }
+}

@@ -1,0 +1,270 @@
+{
+	"techniques": [
+		{
+			"id": "T1071",
+			"name": "Application Layer Protocol",
+			"tactic": "Command and Control",
+			"description": "Adversaries may communicate using application layer protocols to avoid detection.",
+			"keywords": ["c2", "command-and-control", "http", "https", "dns", "tunneling", "beacon", "callback"]
+		},
+		{
+			"id": "T1090",
+			"name": "Proxy",
+			"tactic": "Command and Control",
+			"description": "Adversaries may route network traffic through proxy infrastructure to conceal command and control communications.",
+			"keywords": ["proxy", "forward-proxy", "reverse-proxy", "socks", "relay", "tor", "anonymizer", "traffic-relay"]
+		},
+		{
+			"id": "T1573",
+			"name": "Encrypted Channel",
+			"tactic": "Command and Control",
+			"description": "Adversaries may use encrypted channels to hide command and control activity from network monitoring.",
+			"keywords": ["encrypted-channel", "tls", "ssl", "https", "encrypted-c2", "certificate", "vpn", "obfuscated-traffic"]
+		},
+		{
+			"id": "T1566",
+			"name": "Phishing",
+			"tactic": "Initial Access",
+			"description": "Adversaries may send phishing messages with malicious links or attachments to gain access.",
+			"keywords": ["phishing", "email", "lure", "attachment", "link", "spoof", "credential-harvest", "invoice"]
+		},
+		{
+			"id": "T1059",
+			"name": "Command and Scripting Interpreter",
+			"tactic": "Execution",
+			"description": "Adversaries may abuse command and scripting interpreters to execute malicious code.",
+			"keywords": ["powershell", "cmd", "bash", "script", "macro", "python", "javascript", "shell"]
+		},
+		{
+			"id": "T1053",
+			"name": "Scheduled Task/Job",
+			"tactic": "Execution",
+			"description": "Adversaries may schedule tasks or jobs for delayed execution and persistence.",
+			"keywords": ["scheduled-task", "cron", "at-job", "persistence", "timer", "schtasks", "task-scheduler", "job"]
+		},
+		{
+			"id": "T1027",
+			"name": "Obfuscated/Compressed Files and Information",
+			"tactic": "Defense Evasion",
+			"description": "Adversaries may obfuscate or compress payloads to hinder analysis and detection.",
+			"keywords": ["obfuscation", "packed", "compressed", "encoded", "base64", "stager", "cryptor", "polymorphic"]
+		},
+		{
+			"id": "T1105",
+			"name": "Ingress Tool Transfer",
+			"tactic": "Command and Control",
+			"description": "Adversaries may transfer tools or payloads from external systems into a compromised environment.",
+			"keywords": ["download", "payload", "tool-transfer", "curl", "wget", "bitsadmin", "stage", "dropper", "emotet"]
+		},
+		{
+			"id": "T1569",
+			"name": "System Services",
+			"tactic": "Execution",
+			"description": "Adversaries may use system services to execute malicious programs.",
+			"keywords": ["service", "scm", "systemd", "launchd", "service-start", "daemon", "sc-create", "service-install"]
+		},
+		{
+			"id": "T1078",
+			"name": "Valid Accounts",
+			"tactic": "Initial Access",
+			"description": "Adversaries may use compromised legitimate credentials to blend in with normal activity.",
+			"keywords": ["valid-account", "credential", "stolen-password", "vpn-login", "oauth-token", "session-hijack", "admin-account", "reuse"]
+		},
+		{
+			"id": "T1021",
+			"name": "Remote Services",
+			"tactic": "Lateral Movement",
+			"description": "Adversaries may use remote services to move laterally between systems.",
+			"keywords": ["rdp", "smb", "ssh", "winrm", "vnc", "psexec", "remote-service", "lateral-movement"]
+		},
+		{
+			"id": "T1036",
+			"name": "Masquerading",
+			"tactic": "Defense Evasion",
+			"description": "Adversaries may disguise artifacts as legitimate files or processes.",
+			"keywords": ["masquerading", "rename", "spoofed-name", "legit-process", "impostor", "typosquatting", "icon-mimic", "path-trick"]
+		},
+		{
+			"id": "T1204",
+			"name": "User Execution",
+			"tactic": "Execution",
+			"description": "Adversaries may rely on user interaction to execute malicious content.",
+			"keywords": ["user-execution", "malicious-document", "enable-macros", "open-attachment", "click-link", "social-engineering", "lure-file", "double-click", "emotet"]
+		},
+		{
+			"id": "T1055",
+			"name": "Process Injection",
+			"tactic": "Defense Evasion",
+			"description": "Adversaries may inject code into running processes to evade defenses and execute payloads.",
+			"keywords": ["process-injection", "dll-injection", "reflective-loading", "hollowing", "thread-injection", "memory-injection", "apc-injection", "remote-thread"]
+		},
+		{
+			"id": "T1082",
+			"name": "System Information Discovery",
+			"tactic": "Discovery",
+			"description": "Adversaries may collect host and operating system details for planning follow-on actions.",
+			"keywords": ["system-info", "hostname", "os-version", "hardware", "environment", "whoami", "uname", "inventory"]
+		},
+		{
+			"id": "T1083",
+			"name": "File and Directory Discovery",
+			"tactic": "Discovery",
+			"description": "Adversaries may enumerate files and directories to identify targets and staging locations.",
+			"keywords": ["file-discovery", "directory-listing", "ls", "dir", "find", "enumeration", "path-scan", "filesystem"]
+		},
+		{
+			"id": "T1057",
+			"name": "Process Discovery",
+			"tactic": "Discovery",
+			"description": "Adversaries may enumerate running processes to identify security tools and opportunities.",
+			"keywords": ["process-list", "tasklist", "ps", "running-process", "enumeration", "pid", "wmic-process", "procfs"]
+		},
+		{
+			"id": "T1018",
+			"name": "Remote System Discovery",
+			"tactic": "Discovery",
+			"description": "Adversaries may discover remote systems on the network for lateral movement.",
+			"keywords": ["network-scan", "host-discovery", "remote-system", "ping-sweep", "arp-scan", "nmap", "subnet-enumeration", "asset-discovery"]
+		},
+		{
+			"id": "T1016",
+			"name": "System Network Configuration Discovery",
+			"tactic": "Discovery",
+			"description": "Adversaries may gather network configuration details from compromised hosts.",
+			"keywords": ["ipconfig", "ifconfig", "route-table", "dns-config", "network-config", "netsh", "interface-enumeration", "gateway"]
+		},
+		{
+			"id": "T1049",
+			"name": "System Network Connections Discovery",
+			"tactic": "Discovery",
+			"description": "Adversaries may inspect active network connections and listening ports.",
+			"keywords": ["netstat", "connection-list", "socket", "port-scan", "established-connections", "lsof", "network-sessions", "listener"]
+		},
+		{
+			"id": "T1070",
+			"name": "Indicator Removal on Host",
+			"tactic": "Defense Evasion",
+			"description": "Adversaries may remove forensic artifacts to reduce evidence of compromise.",
+			"keywords": ["log-delete", "clear-history", "timestomp", "artifact-removal", "wevtutil", "bash-history", "wipe", "cleanup"]
+		},
+		{
+			"id": "T1112",
+			"name": "Modify Registry",
+			"tactic": "Defense Evasion",
+			"description": "Adversaries may modify the registry to alter system behavior or persistence.",
+			"keywords": ["registry", "reg-add", "autorun-key", "policy-change", "hklm", "hkcu", "registry-modification", "startup-key"]
+		},
+		{
+			"id": "T1547",
+			"name": "Boot or Logon Autostart Execution",
+			"tactic": "Persistence",
+			"description": "Adversaries may configure programs to run automatically at boot or user logon.",
+			"keywords": ["startup", "persistence", "run-key", "login-item", "scheduled-start", "boot-start", "autostart", "init-script"]
+		},
+		{
+			"id": "T1543",
+			"name": "Create or Modify System Process",
+			"tactic": "Persistence",
+			"description": "Adversaries may create or modify system-level processes and services for persistence.",
+			"keywords": ["create-service", "modify-service", "system-process", "launch-daemon", "svcctl", "persistence-service", "service-binary", "service-config"]
+		},
+		{
+			"id": "T1048",
+			"name": "Exfiltration Over Alternative Protocol",
+			"tactic": "Exfiltration",
+			"description": "Adversaries may exfiltrate data using uncommon or non-primary protocols.",
+			"keywords": ["exfiltration", "ftp", "smtp", "dns-exfil", "icmp", "tor-channel", "alt-protocol", "tunnel"]
+		},
+		{
+			"id": "T1041",
+			"name": "Exfiltration Over C2 Channel",
+			"tactic": "Exfiltration",
+			"description": "Adversaries may exfiltrate data over established command and control channels.",
+			"keywords": ["exfiltration", "c2-channel", "beacon-upload", "http-post", "data-staging", "callback-channel", "encrypted-channel", "operator-control"]
+		},
+		{
+			"id": "T1567",
+			"name": "Exfiltration Over Web Service",
+			"tactic": "Exfiltration",
+			"description": "Adversaries may exfiltrate data to web services or cloud-hosted platforms.",
+			"keywords": ["cloud-upload", "web-service", "api-upload", "paste-site", "dropbox", "google-drive", "gist", "telegram"]
+		},
+		{
+			"id": "T1190",
+			"name": "Exploit Public-Facing Application",
+			"tactic": "Initial Access",
+			"description": "Adversaries may exploit internet-facing applications to gain initial access.",
+			"keywords": ["cve", "exploit", "public-facing", "webapp", "rce", "sql-injection", "deserialization", "vulnerability"]
+		},
+		{
+			"id": "T1133",
+			"name": "External Remote Services",
+			"tactic": "Initial Access",
+			"description": "Adversaries may use exposed remote access services to enter victim environments.",
+			"keywords": ["external-remote", "vpn", "rdp-gateway", "citrix", "ssh-exposed", "remote-access", "edge-service", "bastion"]
+		},
+		{
+			"id": "T1110",
+			"name": "Brute Force",
+			"tactic": "Credential Access",
+			"description": "Adversaries may attempt many passwords or credentials to obtain account access.",
+			"keywords": ["brute-force", "password-spray", "credential-stuffing", "login-attempt", "auth-fail", "mfa-fatigue", "dictionary-attack", "guessing"]
+		},
+		{
+			"id": "T1003",
+			"name": "OS Credential Dumping",
+			"tactic": "Credential Access",
+			"description": "Adversaries may dump operating system credential material for privilege escalation.",
+			"keywords": ["credential-dump", "lsass", "sam", "ntds", "mimikatz", "hashdump", "secretsdump", "cached-credentials"]
+		},
+		{
+			"id": "T1098",
+			"name": "Account Manipulation",
+			"tactic": "Persistence",
+			"description": "Adversaries may manipulate account settings or permissions to maintain access.",
+			"keywords": ["account-manipulation", "add-user", "group-membership", "permission-change", "mail-forward", "oauth-consent", "token-grant", "iam-policy"]
+		},
+		{
+			"id": "T1562",
+			"name": "Impair Defenses",
+			"tactic": "Defense Evasion",
+			"description": "Adversaries may disable or tamper with security controls to avoid detection.",
+			"keywords": ["disable-av", "firewall-off", "tamper", "security-tool-kill", "defender-exclusion", "edr-bypass", "log-block", "sensor-stop"]
+		},
+		{
+			"id": "T1486",
+			"name": "Data Encrypted for Impact",
+			"tactic": "Impact",
+			"description": "Adversaries may encrypt victim data to disrupt operations and demand ransom.",
+			"keywords": ["ransomware", "encryption", "file-lock", "extortion", "crypto-malware", "encryptor", "ransom-note", "key-exchange"]
+		},
+		{
+			"id": "T1571",
+			"name": "Non-Standard Port",
+			"tactic": "Command and Control",
+			"description": "Adversaries may use uncommon ports for command and control to evade network defenses.",
+			"keywords": ["non-standard-port", "high-port", "c2-port", "unusual-port", "evasion", "port-hopping", "alt-port", "custom-port"]
+		},
+		{
+			"id": "T1583",
+			"name": "Acquire Infrastructure",
+			"tactic": "Resource Development",
+			"description": "Adversaries may obtain infrastructure such as servers, domains, or botnets for operations.",
+			"keywords": ["botnet", "bulletproof-hosting", "vps", "domain-registration", "server-rental", "infrastructure", "cdn-abuse", "proxy-network"]
+		},
+		{
+			"id": "T1585",
+			"name": "Establish Accounts",
+			"tactic": "Resource Development",
+			"description": "Adversaries may create and maintain accounts to support phishing, infrastructure operations, or persistence.",
+			"keywords": ["establish-accounts", "account-creation", "burner-email", "free-email", "disposable-email", "registration", "sockpuppet", "fraud-account"]
+		},
+		{
+			"id": "T1102",
+			"name": "Web Service",
+			"tactic": "Command and Control",
+			"description": "Adversaries may use web services as dead drops or command and control channels.",
+			"keywords": ["web-service", "social-media", "c2-over-web", "github", "pastebin", "cloud-api", "dead-drop", "forum-c2"]
+		}
+	]
+}

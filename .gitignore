@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+.npm
+
+# Build output
+dist/
+build/
+*.js.map
+
+# Environment — never commit real secrets
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+error.log
+
+# Runtime / OS
+.DS_Store
+Thumbs.db
+*.tmp
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Test artifacts
+coverage/
+.nyc_output/
+
+# Claude Code session memory
+.claude/
+
+# Docker volumes (if mounted locally)
+pgdata/
