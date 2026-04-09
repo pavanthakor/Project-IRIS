@@ -130,9 +130,18 @@ class ShodanFeed extends BaseFeed {
 
         if (error.response?.status === 401 || error.response?.status === 403) {
           return {
-            status: 'failed',
-            feedName: this.name,
-            error: 'Shodan API key invalid or insufficient permissions',
+            status:    'disabled',
+            feedName:  this.name,
+            error:     'Shodan free plan does not support host lookups — upgrade at shodan.io or set FEED_SHODAN_ENABLED=false',
+            latencyMs: Date.now() - start,
+          };
+        }
+
+        if (error.response?.status === 429) {
+          return {
+            status:    'circuit_open',
+            feedName:  this.name,
+            error:     'Shodan rate limit exceeded — try again later',
             latencyMs: Date.now() - start,
           };
         }
