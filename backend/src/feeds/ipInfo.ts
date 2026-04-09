@@ -3,6 +3,34 @@ import { BaseFeed } from './baseFeed';
 import { FeedResult, IoCType } from '../types';
 import { IPINFO_API_KEY } from '../config';
 
+const PRIVACY_KEYS = ['vpn', 'proxy', 'tor', 'relay', 'hosting'] as const;
+const ANON_ORG_KEYWORDS = [
+  'tor',
+  'exit',
+  'relay',
+  'anonymous',
+  'vpn',
+  'proxy',
+  'mullvad',
+  'nordvpn',
+  'expressv',
+] as const;
+const HOSTING_ORG_KEYWORDS = ['hosting', 'datacenter', 'server'] as const;
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : undefined;
+}
+
+function hasPrivacyFlags(privacy: Record<string, unknown> | undefined): boolean {
+  if (!privacy) return false;
+  return PRIVACY_KEYS.some((key) => typeof privacy[key] === 'boolean');
+}
+
+function hasKeyword(haystack: string, keywords: readonly string[]): boolean {
+  const normalized = haystack.toLowerCase();
+  return keywords.some((k) => normalized.includes(k));
+}
+
 class IPInfoFeed extends BaseFeed {
   name = 'IPInfo';
   supportedTypes: IoCType[] = ['ip'];
@@ -27,21 +55,63 @@ class IPInfoFeed extends BaseFeed {
         return { status: 'failed', feedName: this.name, error: 'Unexpected response format', latencyMs: Date.now() - start };
       }
 
-      const privacy = data.privacy as Record<string, boolean> | undefined ?? {};
-      const tags: string[] = [];
-      if (privacy.vpn)     tags.push('vpn');
-      if (privacy.proxy)   tags.push('proxy');
-      if (privacy.tor)     tags.push('tor');
-      if (privacy.relay)   tags.push('relay');
-      if (privacy.hosting) tags.push('hosting');
+      const asnRecord = asRecord(data.asn);
+      const asn = {
+        asn: typeof asnRecord?.asn === 'string' ? asnRecord.asn : undefined,
+        name: typeof asnRecord?.name === 'string' ? asnRecord.name : undefined,
+        route: typeof asnRecord?.route === 'string' ? asnRecord.route : undefined,
+        type: typeof asnRecord?.type === 'string' ? asnRecord.type : undefined,
+      };
 
+      const org = typeof data.org === 'string' ? data.org : '';
+      const privacy = asRecord(data.privacy);
+      const privacyHasFlags = hasPrivacyFlags(privacy);
+
+      let tags: string[] = [];
       let confidenceScore = 0;
-      if (privacy.tor)     confidenceScore = Math.max(confidenceScore, 80);
-      if (privacy.proxy)   confidenceScore = Math.max(confidenceScore, 60);
-      if (privacy.vpn)     confidenceScore = Math.max(confidenceScore, 50);
-      if (privacy.hosting) confidenceScore = Math.max(confidenceScore, 30);
 
-      const asn     = data.asn     as Record<string, string> | undefined ?? {};
+      if (data.bogon === true) {
+        tags = ['bogon'];
+        confidenceScore = 0;
+      } else if (privacyHasFlags) {
+        const vpn = privacy?.vpn === true;
+        const proxy = privacy?.proxy === true;
+        const tor = privacy?.tor === true;
+        const relay = privacy?.relay === true;
+        const hosting = privacy?.hosting === true;
+
+        if (vpn) tags.push('vpn');
+        if (proxy) tags.push('proxy');
+        if (tor) tags.push('tor');
+        if (relay) tags.push('relay');
+        if (hosting) tags.push('hosting');
+
+        // Existing privacy-based scoring (kept as-is)
+        if (tor) confidenceScore = Math.max(confidenceScore, 80);
+        if (proxy) confidenceScore = Math.max(confidenceScore, 60);
+        if (vpn) confidenceScore = Math.max(confidenceScore, 50);
+        if (hosting) confidenceScore = Math.max(confidenceScore, 30);
+      } else {
+        const searchableOrg = org;
+        const searchableAsnName = asn.name ?? '';
+        const searchableHostname = typeof data.hostname === 'string' ? data.hostname : '';
+
+        const isAnonymousNetwork =
+          hasKeyword(searchableOrg, ANON_ORG_KEYWORDS) ||
+          hasKeyword(searchableAsnName, ANON_ORG_KEYWORDS) ||
+          hasKeyword(searchableHostname, ANON_ORG_KEYWORDS);
+
+        const isHosting = hasKeyword(searchableOrg, HOSTING_ORG_KEYWORDS);
+
+        if (isAnonymousNetwork) {
+          confidenceScore = 60;
+          tags = ['anonymous-network'];
+        } else if (isHosting) {
+          confidenceScore = 30;
+          tags = ['hosting'];
+        }
+      }
+
       const company = data.company as Record<string, string> | undefined;
       const abuse   = data.abuse   as Record<string, string> | undefined;
 
@@ -53,7 +123,7 @@ class IPInfoFeed extends BaseFeed {
         tags,
         data: {
           hostname: data.hostname as string | undefined,
-          org:      data.org      as string | undefined,
+          org:      org || undefined,
           asn:      asn.asn,
           asnName:  asn.name,
           route:    asn.route,
@@ -68,7 +138,7 @@ class IPInfoFeed extends BaseFeed {
         geo: {
           country: data.country as string | undefined,
           city:    data.city    as string | undefined,
-          org:     data.org     as string | undefined,
+          org:     org || undefined,
           asn:     asn.asn,
         },
         rawData: data,

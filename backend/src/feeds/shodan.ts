@@ -2,6 +2,7 @@ import axios from 'axios';
 import { BaseFeed } from './baseFeed';
 import { FeedResult, IoCType } from '../types';
 import { SHODAN_API_KEY } from '../config';
+import logger from '../utils/logger';
 
 interface SslSubject {
   readonly CN?: string;
@@ -37,6 +38,19 @@ function parseHttpTitles(data: Record<string, unknown>): string[] {
   } catch { return []; }
 }
 
+function buildShodanHostUrl(ioc: string, apiKey: string): URL {
+  const url = new URL(`https://api.shodan.io/shodan/host/${ioc}`);
+  // Per Shodan API, the key must be provided as a query parameter.
+  url.searchParams.set('key', apiKey);
+  return url;
+}
+
+function maskApiKey(apiKey: string): string {
+  if (!apiKey) return '***';
+  if (apiKey.length <= 8) return '*'.repeat(apiKey.length);
+  return `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}`;
+}
+
 class ShodanFeed extends BaseFeed {
   name = 'Shodan';
   supportedTypes: IoCType[] = ['ip'];
@@ -51,11 +65,16 @@ class ShodanFeed extends BaseFeed {
       return { status: 'disabled', feedName: this.name, error: 'API key not configured', latencyMs: 0 };
     }
 
+    const requestUrl = buildShodanHostUrl(ioc, SHODAN_API_KEY);
+    const maskedRequestUrl = buildShodanHostUrl(ioc, maskApiKey(SHODAN_API_KEY));
+
+    logger.info('shodan_request_uri', {
+      feedName: this.name,
+      requestUri: maskedRequestUrl.toString(),
+    });
+
     try {
-      const response = await axios.get(
-        `https://api.shodan.io/shodan/host/${ioc}?key=${SHODAN_API_KEY}`,
-        { timeout: 8000 }
-      );
+      const response = await axios.get(requestUrl.toString(), { timeout: 8000 });
 
       const data = response.data as Record<string, unknown>;
       if (!data) {
@@ -101,12 +120,24 @@ class ShodanFeed extends BaseFeed {
         rawData: response.data,
       };
     } catch (error: unknown) {
-      if (axios.isAxiosError(error) && error.response?.status === 404) {
-        return {
-          status: 'success', feedName: this.name, latencyMs: Date.now() - start,
-          detections: 0, confidenceScore: 0, tags: [], rawData: null,
-        };
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          return {
+            status: 'success', feedName: this.name, latencyMs: Date.now() - start,
+            detections: 0, confidenceScore: 0, tags: [], rawData: null,
+          };
+        }
+
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          return {
+            status: 'failed',
+            feedName: this.name,
+            error: 'Shodan API key invalid or insufficient permissions',
+            latencyMs: Date.now() - start,
+          };
+        }
       }
+
       return {
         status:    'failed',
         feedName:  this.name,

@@ -2,7 +2,7 @@
  * Multi-tier caching service backed by Redis.
  *
  * Key space (all prefixed with "tip:" to avoid collisions on shared Redis):
- *   tip:ioc:<sha256(ioc:type)>          — cached ThreatProfile (envelope format)
+ *   tip:query:v2:<sha256(ioc:type)>     — cached ThreatProfile (envelope format)
  *   tip:cache:stats:hits                — INCR counter
  *   tip:cache:stats:misses              — INCR counter
  *   tip:cache:stats:errors              — INCR counter
@@ -28,7 +28,9 @@ import logger from '../utils/logger';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const KEY_PREFIX        = 'tip:ioc:';
+// Bump to v3+ whenever feed parsing/scoring semantics change to invalidate stale query cache automatically.
+const FEED_CACHE_VERSION = 'v2';
+const KEY_PREFIX        = `tip:query:${FEED_CACHE_VERSION}:`;
 const STATS_PREFIX      = 'tip:cache:stats:';
 const REFRESH_THRESHOLD = 0.25; // trigger bg refresh when TTL < 25 % remaining
 
@@ -277,7 +279,7 @@ export async function invalidateCacheByIoC(ioc: string): Promise<number> {
 }
 
 /**
- * Flush all IoC cache entries (tip:ioc:* pattern) using SCAN/DEL.
+ * Flush all IoC cache entries (tip:query:v2:* pattern) using SCAN/DEL.
  *
  * Uses SCAN rather than FLUSHDB to preserve circuit-breaker state, rate-limit
  * counters, and cache stats on the shared Redis instance.

@@ -28,6 +28,8 @@ const MIN_TIMEOUT_MS              = 3_000;
 const MAX_TIMEOUT_MS              = 10_000;
 const MAX_LATENCY_SAMPLES         = 100;
 const FEED_RESPONSE_TTL_SECS      = 30 * 60; // 30 min
+// Bump to v3+ whenever feed parsing/scoring semantics change to invalidate stale feed-response cache automatically.
+const FEED_CACHE_VERSION          = 'v2';
 
 const RECOVERING_DURATION_MS      = 60_000;
 const RECOVERING_PASS_RATE        = 0.25;
@@ -47,7 +49,7 @@ const recTotalKey   = (f: string): string => `tip:cb:${f}:rec:total`;
 const latencyKey    = (f: string): string => `tip:feed:latency:${f}`;
 
 const feedCacheKey = (f: string, type: IoCType, ioc: string): string =>
-  `tip:feed:response:${f}:${createHash('sha256').update(`${type}:${ioc}`).digest('hex')}`;
+  `tip:feed:response:${FEED_CACHE_VERSION}:${f}:${createHash('sha256').update(`${type}:${ioc}`).digest('hex')}`;
 
 // ── Adaptive timeout ──────────────────────────────────────────────────────────
 
