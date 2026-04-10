@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+/* Tailwind v4 CSS-first theme tokens */
+@theme {
+  --color-iris-bg: #0a0e14;
+  --color-iris-surface: #111820;
+  --color-iris-elevated: #1a2332;
+  --color-iris-border: #243042;
+  --color-iris-border-light: #2d3d52;
+
+  --color-iris-accent: #c5f467;
+  --color-iris-accent-dim: #8fb33a;
+
+  --color-iris-danger: #ef4444;
+  --color-iris-warning: #f59e0b;
+  --color-iris-success: #22c55e;
+  --color-iris-info: #3b82f6;
+
+  --color-iris-text: #e2e8f0;
+  --color-iris-text-dim: #8896a8;
+  --color-iris-text-muted: #556479;
+
+  --font-sans: Inter, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+  --animate-scan-line: scanLine 3s linear infinite;
+  --animate-fade-in: fadeIn 0.5s ease-out;
+  --animate-slide-up: slideUp 0.4s ease-out;
+  --animate-score-fill: scoreFill 1.2s ease-out forwards;
+}
+
+@keyframes scanLine {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes slideUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scoreFill {
+  0% { stroke-dashoffset: 314; }
+}
+
+@layer base {
+  body {
+    background-color: var(--color-iris-bg);
+    color: var(--color-iris-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background-color: var(--color-iris-bg); }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-iris-border);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background-color: var(--color-iris-border-light); }
+
+  /* Selection */
+  ::selection {
+    background-color: rgba(197, 244, 103, 0.2);
+    color: var(--color-iris-accent);
+  }
+}
+
+@layer components {
+  .iris-card {
+    background-color: var(--color-iris-surface);
+    border: 1px solid var(--color-iris-border);
+    border-radius: 0.75rem;
+  }
+
+  .iris-card-elevated {
+    background-color: var(--color-iris-elevated);
+    border: 1px solid var(--color-iris-border);
+    border-radius: 0.75rem;
+  }
+
+  .iris-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 500;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+  }
+
+  .iris-input {
+    width: 100%;
+    background-color: var(--color-iris-bg);
+    border: 1px solid var(--color-iris-border);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    color: var(--color-iris-text);
+    outline: none;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      background-color 0.2s ease,
+      color 0.2s ease;
+  }
+
+  .iris-input::placeholder {
+    color: var(--color-iris-text-muted);
+  }
+
+  .iris-input:focus {
+    border-color: rgba(197, 244, 103, 0.5);
+    box-shadow: 0 0 0 2px rgba(197, 244, 103, 0.5);
+  }
+
+  .iris-btn-primary {
+    background-color: var(--color-iris-accent);
+    color: var(--color-iris-bg);
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+  }
+
+  .iris-btn-primary:hover {
+    background-color: var(--color-iris-accent-dim);
+  }
+
+  .iris-btn-secondary {
+    background-color: var(--color-iris-elevated);
+    border: 1px solid var(--color-iris-border);
+    color: var(--color-iris-text);
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+  }
+
+  .iris-btn-secondary:hover {
+    background-color: rgba(36, 48, 66, 0.5);
+  }
+}
+

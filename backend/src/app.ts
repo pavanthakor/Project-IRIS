@@ -55,8 +55,9 @@ app.use(helmet({
 }));
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
+const allowedOrigins = config.corsOrigin.split(',').map((s) => s.trim()).filter(Boolean);
 app.use(cors({
-  origin:         config.corsOrigin,
+  origin:         allowedOrigins.length === 1 ? allowedOrigins[0] : allowedOrigins,
   methods:        ['GET', 'POST', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Request-ID'],
   exposedHeaders: ['X-Request-ID', 'X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset', 'Retry-After'],

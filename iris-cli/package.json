@@ -1,0 +1,29 @@
+{
+  "name": "iris-cli",
+  "version": "1.0.0",
+  "description": "IRIS Threat Intelligence CLI — query, analyze, and report from your terminal",
+  "main": "dist/index.js",
+  "bin": {
+    "iris": "./bin/iris"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "axios": "^1.9.0",
+    "chalk": "^4.1.2",
+    "cli-table3": "^0.6.5",
+    "commander": "^12.1.0",
+    "conf": "^10.2.0",
+    "inquirer": "^8.2.6",
+    "ora": "^5.4.1"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^8.2.12",
+    "@types/node": "^22.15.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.8.3"
+  }
+}

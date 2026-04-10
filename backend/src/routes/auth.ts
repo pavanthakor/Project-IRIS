@@ -185,7 +185,7 @@ router.post(
       });
 
       await timingJitter(start);
-      res.status(201).json({ id: userRow.id, email: userRow.email, token });
+      res.status(201).json({ id: userRow.id, email: userRow.email, tier, token });
 
     } catch (error) {
       if (isUniqueViolation(error)) {
