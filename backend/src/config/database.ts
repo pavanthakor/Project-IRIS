@@ -104,8 +104,8 @@ pool.on('error', (error: Error) => {
 
 export const redis = new Redis(REDIS_URL, {
   lazyConnect: true,
-  maxRetriesPerRequest: 1,
-  enableOfflineQueue: true,
+  maxRetriesPerRequest: 0,
+  enableOfflineQueue: false,
   retryStrategy: (times: number): number => {
     // Never give up — cap at 30 s backoff so we don't spam logs.
     // The 'reconnecting' event keeps systemState informed.

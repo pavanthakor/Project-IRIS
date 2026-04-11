@@ -282,9 +282,9 @@ router.post(
       systemStatus:    buildSystemStatus(),
     };
 
-    await persistQuery(user.id, threatProfile);
     res.json(threatProfile);
 
+    void persistQuery(user.id, threatProfile);
     dispatchWebhooks(user.id, threatProfile);
     // Always write to cache (even on force=true, so next request can use it)
     void setCachedResult(ioc, type, threatProfile);
@@ -323,73 +323,81 @@ router.post(
   }
 );
 
-router.get('/history', async (req: Request, res: Response) => {
-  const user = req.user as UserPayload;
-  const page = parseInt(req.query.page as string, 10) || 1;
-  const pageSize = parseInt(req.query.pageSize as string, 10) || 10;
+router.get('/history', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = req.user as UserPayload;
+    const page = parseInt(req.query.page as string, 10) || 1;
+    const pageSize = parseInt(req.query.pageSize as string, 10) || 10;
 
-  if (page < 1 || pageSize < 1 || pageSize > 100) {
-    throw new ValidationError('Invalid pagination parameters');
+    if (page < 1 || pageSize < 1 || pageSize > 100) {
+      throw new ValidationError('Invalid pagination parameters');
+    }
+
+    const offset = (page - 1) * pageSize;
+
+    const [historyResult, totalResult] = await Promise.all([
+      dbQuery(
+        `SELECT id, ioc_value, ioc_type, risk_score, queried_at
+         FROM ioc_queries
+         WHERE user_id = $1
+         ORDER BY queried_at DESC
+         LIMIT $2 OFFSET $3`,
+        [user.id, pageSize, offset]
+      ),
+      dbQuery('SELECT COUNT(*) FROM ioc_queries WHERE user_id = $1', [user.id]),
+    ]);
+
+    const totalRow = totalResult.rows[0] as { count?: unknown } | undefined;
+    const total = totalRow?.count ? parseInt(String(totalRow.count), 10) : 0;
+
+    const response: PaginatedHistory = {
+      items: historyResult.rows.map(row => ({
+        id: row.id,
+        iocValue: row.ioc_value,
+        iocType: row.ioc_type,
+        riskScore: row.risk_score,
+        queriedAt: new Date(row.queried_at).toISOString(),
+      })),
+      total,
+      page,
+      pageSize,
+    };
+
+    res.json(response);
+  } catch (err) {
+    next(err);
   }
-
-  const offset = (page - 1) * pageSize;
-
-  const [historyResult, totalResult] = await Promise.all([
-    dbQuery(
-      `SELECT id, ioc_value, ioc_type, risk_score, queried_at
-       FROM ioc_queries
-       WHERE user_id = $1
-       ORDER BY queried_at DESC
-       LIMIT $2 OFFSET $3`,
-      [user.id, pageSize, offset]
-    ),
-    dbQuery('SELECT COUNT(*) FROM ioc_queries WHERE user_id = $1', [user.id]),
-  ]);
-
-  const totalRow = totalResult.rows[0] as { count?: unknown } | undefined;
-  const total = totalRow?.count ? parseInt(String(totalRow.count), 10) : 0;
-
-  const response: PaginatedHistory = {
-    items: historyResult.rows.map(row => ({
-      id: row.id,
-      iocValue: row.ioc_value,
-      iocType: row.ioc_type,
-      riskScore: row.risk_score,
-      queriedAt: new Date(row.queried_at).toISOString(),
-    })),
-    total,
-    page,
-    pageSize,
-  };
-
-  res.json(response);
 });
 
-router.get('/:id', async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const user = req.user as UserPayload;
+router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const user = req.user as UserPayload;
 
-  const result = await dbQuery(
-    'SELECT result_json FROM ioc_queries WHERE id = $1 AND user_id = $2',
-    [id, user.id]
-  );
+    const result = await dbQuery(
+      'SELECT result_json FROM ioc_queries WHERE id = $1 AND user_id = $2',
+      [id, user.id]
+    );
 
-  if (result.rowCount === 0) {
-    throw new NotFoundError(`Query with ID ${id} not found`);
+    if (result.rowCount === 0) {
+      throw new NotFoundError(`Query with ID ${id} not found`);
+    }
+
+    const row = result.rows[0] as { result_json?: unknown } | undefined;
+    if (!row) {
+      throw new NotFoundError(`Query with ID ${id} not found`);
+    }
+
+    const raw = row.result_json;
+    const profile =
+      typeof raw === 'string'
+        ? (JSON.parse(raw) as ThreatProfile)
+        : (raw as ThreatProfile);
+
+    res.json(profile);
+  } catch (err) {
+    next(err);
   }
-
-  const row = result.rows[0] as { result_json?: unknown } | undefined;
-  if (!row) {
-    throw new NotFoundError(`Query with ID ${id} not found`);
-  }
-
-  const raw = row.result_json;
-  const profile =
-    typeof raw === 'string'
-      ? (JSON.parse(raw) as ThreatProfile)
-      : (raw as ThreatProfile);
-
-  res.json(profile);
 });
 
 export const queryRoutes = router;
