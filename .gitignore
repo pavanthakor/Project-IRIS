@@ -16,6 +16,7 @@ build/
 *.log
 logs/
 error.log
+backend.log
 
 # Runtime / OS
 .DS_Store
@@ -36,3 +37,24 @@ coverage/
 
 # Docker volumes (if mounted locally)
 pgdata/
+
+# Demo and script files
+demo-script.sh
+demo_bulk_upload.csv
+pre-recording-test.sh
+record_video.py
+*_PROMPT.md
+*_GUIDE.md
+*_SCRIPT.md
+*_CHECKLIST.txt
+*_REPORT.md
+*.webm
+*.mp4
+*.srt
+video_subtitles*.srt
+ffmpeg_error.log
+playwright-browsers/
+
+# Temporary build artifacts
+.tmp/
+.vite-temp/

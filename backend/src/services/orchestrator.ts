@@ -1,12 +1,14 @@
 import { abuseIPDBFeed } from '../feeds/abuseIPDB';
-import { abstractEmailFeed } from '../feeds/abstractEmail';
+import { alienVaultFeed } from '../feeds/alienVault';
 import { BaseFeed } from '../feeds/baseFeed';
 import { queryWithCircuitBreaker } from '../feeds/circuitBreaker';
 import { ipInfoFeed } from '../feeds/ipInfo';
 import { shodanFeed } from '../feeds/shodan';
 import { virusTotalFeed } from '../feeds/virusTotal';
+import { zeroBounceFeed } from '../feeds/zeroBounce';
 import { FeedResult, IoCType } from '../types';
 import logger from '../utils/logger';
+import { analyzeHeuristics } from './heuristicDetection';
 
 type FeedRejection = {
   readonly feedName?: string;
@@ -18,7 +20,8 @@ export const ALL_FEEDS: BaseFeed[] = [
   abuseIPDBFeed,
   shodanFeed,
   ipInfoFeed,
-  abstractEmailFeed
+  zeroBounceFeed,
+  alienVaultFeed
 ];
 
 export const maskIoC = (ioc: string): string => {
@@ -119,6 +122,19 @@ export async function orchestrateQuery(
     failCount,
     durationMs
   });
+
+  // Add heuristic detection
+  const heuristics = analyzeHeuristics(normalizedIoc, type);
+  if (heuristics.detected) {
+    feeds.push({
+      status: 'success',
+      feedName: 'Heuristic Analysis',
+      latencyMs: 0,
+      confidenceScore: heuristics.confidence,
+      tags: heuristics.tags,
+      data: { reasons: heuristics.reasons, techniques: heuristics.mitreTechniques }
+    });
+  }
 
   return {
     feeds,

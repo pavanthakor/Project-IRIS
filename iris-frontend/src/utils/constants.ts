@@ -87,10 +87,16 @@ export const FEED_CONFIG: readonly FeedConfig[] = [
 		color: '#22c55e',
 	},
 	{
-		name: 'AbstractEmail',
-		endpoint: 'https://emailreputation.abstractapi.com/v1',
+		name: 'ZeroBounce',
+		endpoint: 'https://api.zerobounce.net/v2',
 		supportedTypes: ['email'],
 		color: '#a78bfa',
+	},
+	{
+		name: 'AlienVault OTX',
+		endpoint: 'https://otx.alienvault.com/api/v1',
+		supportedTypes: ['ip', 'domain'],
+		color: '#06b6d4',
 	},
 ] as const;
 

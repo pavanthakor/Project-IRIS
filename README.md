@@ -25,7 +25,7 @@ The platform is designed for reliability in real-world security workflows: JWT-p
 │ Feed Connectors│ │   PostgreSQL      │ │      Redis       │
 │ VT/AbuseIPDB/  │ │ users/query history│ │ cache/rate-limit │
 │ Shodan/IPInfo/ │ │ and audit trail    │ │ circuit-breakers │
-│ AbstractEmail  │ └───────────────────┘ └──────────────────┘
+│ ZeroBounce     │ └───────────────────┘ └──────────────────┘
 └────────────────┘
 ```
 
@@ -47,7 +47,7 @@ The platform is designed for reliability in real-world security workflows: JWT-p
    - AbuseIPDB
    - Shodan
    - IPInfo
-   - Abstract Email Validation
+   - ZeroBounce (email validation)
 
 ## Quick Start
 
@@ -100,12 +100,12 @@ All backend variables are defined in `backend/.env.example`.
 | `ABUSEIPDB_API_KEY` | API key for AbuseIPDB feed | _(empty)_ | Yes (if feed enabled) |
 | `SHODAN_API_KEY` | API key for Shodan feed | _(empty)_ | Yes (if feed enabled) |
 | `IPINFO_API_KEY` | API key for IPInfo feed | _(empty)_ | Yes (if feed enabled) |
-| `ABSTRACT_EMAIL_API_KEY` | API key for Abstract Email feed | _(empty)_ | Yes (if feed enabled) |
+| `ZEROBOUNCE_API_KEY` | API key for ZeroBounce email validation feed | _(empty)_ | Yes (if feed enabled) |
 | `FEED_VIRUSTOTAL_ENABLED` | Enable/disable VirusTotal connector | `true` | No |
 | `FEED_ABUSEIPDB_ENABLED` | Enable/disable AbuseIPDB connector | `true` | No |
 | `FEED_SHODAN_ENABLED` | Enable/disable Shodan connector | `true` | No |
 | `FEED_IPINFO_ENABLED` | Enable/disable IPInfo connector | `true` | No |
-| `FEED_ABSTRACTEMAIL_ENABLED` | Enable/disable Abstract Email connector | `true` | No |
+| `FEED_ZEROBOUNCE_ENABLED` | Enable/disable ZeroBounce connector | `true` | No |
 | `CACHE_ENABLED` | Enable/disable Redis result caching | `true` | No |
 | `AUTH_REQUIRED` | Enable/disable auth guard for protected routes | `true` | No |
 
@@ -131,7 +131,7 @@ Response example:
       "AbuseIPDB": "healthy",
       "Shodan": "healthy",
       "IPInfo": "healthy",
-      "AbstractEmail": "healthy"
+      "ZeroBounce": "healthy"
    },
    "version": "1.0.0"
 }

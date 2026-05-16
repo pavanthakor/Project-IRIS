@@ -19,7 +19,7 @@ export const FEED_NAMES = [
   'AbuseIPDB',
   'Shodan',
   'IPInfo',
-  'AbstractEmail',
+  'ZeroBounce',
 ] as const;
 
 export type FeedName = (typeof FEED_NAMES)[number];
@@ -109,16 +109,22 @@ export function recordFeedOutcome(
   const cutoff = now - WINDOW_MS;
   const member = `${now}`;
 
-  redis
-    .pipeline()
-    .zadd(hKey(feedName, 'requests'), now, member)
-    .zadd(hKey(feedName, outcome),   now, member)
-    .zremrangebyscore(hKey(feedName, 'requests'), '-inf', cutoff)
-    .zremrangebyscore(hKey(feedName, outcome),   '-inf', cutoff)
-    .expire(hKey(feedName, 'requests'), WINDOW_TTL)
-    .expire(hKey(feedName, outcome),   WINDOW_TTL)
-    .exec()
-    .catch(() => undefined);
+  // Fire-and-forget: feed health tracking must never break the request path.
+  // In tests we may mock Redis without pipeline(); guard against that.
+  try {
+    redis
+      .pipeline()
+      .zadd(hKey(feedName, 'requests'), now, member)
+      .zadd(hKey(feedName, outcome),   now, member)
+      .zremrangebyscore(hKey(feedName, 'requests'), '-inf', cutoff)
+      .zremrangebyscore(hKey(feedName, outcome),   '-inf', cutoff)
+      .expire(hKey(feedName, 'requests'), WINDOW_TTL)
+      .expire(hKey(feedName, outcome),   WINDOW_TTL)
+      .exec()
+      .catch(() => undefined);
+  } catch {
+    // noop
+  }
 
   // Update last-seen timestamps
   if (outcome === 'success') {

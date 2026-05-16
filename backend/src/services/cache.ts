@@ -29,7 +29,7 @@ import logger from '../utils/logger';
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 // Bump to v3+ whenever feed parsing/scoring semantics change to invalidate stale query cache automatically.
-const FEED_CACHE_VERSION = 'v2';
+const FEED_CACHE_VERSION = 'v3';
 const KEY_PREFIX        = `tip:query:${FEED_CACHE_VERSION}:`;
 const STATS_PREFIX      = 'tip:cache:stats:';
 const REFRESH_THRESHOLD = 0.25; // trigger bg refresh when TTL < 25 % remaining

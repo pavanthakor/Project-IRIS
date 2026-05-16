@@ -14,9 +14,10 @@ process.on('unhandledRejection', (reason: unknown) => {
 import type { Server } from 'node:http';
 import app from './app';
 import config from './config';
-import { closeConnections } from './config/database';
+import { closeConnections, ensureRedisConnection } from './config/database';
 import { runStartupDiagnostics } from './services/startupDiagnostics';
 import { startFeedAutoRecovery } from './services/feedAutoRecovery';
+import { startFeedTelemetryHeartbeat } from './services/feedTelemetryHeartbeat';
 import logger from './utils/logger';
 
 const server: Server = app.listen(config.port, () => {
@@ -24,8 +25,12 @@ const server: Server = app.listen(config.port, () => {
     port:    config.port,
     nodeEnv: config.nodeEnv,
   });
+  // With lazyConnect+offline-queue disabled, connect early so Redis-backed
+  // features (rate limiting/caching) work immediately in dev.
+  void ensureRedisConnection().catch(() => undefined);
   void runStartupDiagnostics();
   startFeedAutoRecovery();
+  startFeedTelemetryHeartbeat();
 });
 
 const gracefulShutdown = async (signal: NodeJS.Signals): Promise<void> => {

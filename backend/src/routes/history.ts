@@ -37,7 +37,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         id: row.id,
         iocValue: row.ioc_value,
         iocType: row.ioc_type,
-        riskScore: row.risk_score,
+        riskScore: row.risk_score ? parseFloat(row.risk_score) : null,
         queriedAt: new Date(row.queried_at).toISOString(),
       })),
       total,

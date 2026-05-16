@@ -6,7 +6,7 @@ import type { GlobalOptionsGetter } from '../types';
 import { failureIcon, successIcon, setColorEnabled } from '../utils/display';
 import { printTable } from '../utils/table';
 
-const FEED_ORDER = ['VirusTotal', 'AbuseIPDB', 'Shodan', 'IPInfo', 'AbstractEmail'];
+const FEED_ORDER = ['VirusTotal', 'AbuseIPDB', 'Shodan', 'IPInfo', 'ZeroBounce'];
 
 function statusText(status: string): string {
   if (status === 'healthy') return `${successIcon()} Healthy`;

@@ -189,6 +189,13 @@ export interface FeedHealthMetrics {
 	readonly lastFailureAt: string | null;
 }
 
+export interface FeedQuotaSnapshot {
+	readonly remaining: number | null;
+	readonly total: number | null;
+	readonly updatedAt: string | null;
+	readonly source: 'provider-or-cache' | 'unknown';
+}
+
 export interface HealthResponse {
 	status: HealthStatus;
 	uptime: number;
@@ -202,6 +209,7 @@ export interface HealthResponse {
 	// Extra fields the backend currently includes.
 	overall?: SystemStatus['overall'];
 	feedHealth?: Record<string, FeedHealthMetrics>;
+	quota?: Record<string, FeedQuotaSnapshot>;
 }
 
 export type ReportFormat = 'pdf' | 'json' | 'csv';

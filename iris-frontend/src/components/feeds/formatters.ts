@@ -26,8 +26,9 @@ export function latencyTone(ms: number | null | undefined): 'normal' | 'warn' | 
 export function quotaPercent(used: number, total: number | null): number {
   if (!Number.isFinite(used) || used < 0) return 0;
   if (total === null) {
-    // Unknown/infinite quota: show a steady, non-alarming fill.
-    return 65;
+    // Unknown/infinite quota: still animate with live activity, but cap it.
+    if (used <= 0) return 0;
+    return clamp(10 + Math.log10(used + 1) * 28, 10, 95);
   }
   if (!Number.isFinite(total) || total <= 0) return 0;
   return clamp((used / total) * 100, 0, 100);

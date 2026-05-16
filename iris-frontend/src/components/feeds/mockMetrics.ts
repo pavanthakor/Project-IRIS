@@ -39,7 +39,7 @@ const DEFAULT_MOCKS: Record<string, MockFeedMetrics> = {
     avgLatencyMs: 640,
     p95LatencyMs: 1600,
   },
-  AbstractEmail: {
+  ZeroBounce: {
     uptimePercent30d: 96.4,
     quotaUsed: 45,
     quotaTotal: 500,

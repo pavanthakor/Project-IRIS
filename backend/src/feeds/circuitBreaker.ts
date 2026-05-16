@@ -29,7 +29,7 @@ const MAX_TIMEOUT_MS              = 10_000;
 const MAX_LATENCY_SAMPLES         = 100;
 const FEED_RESPONSE_TTL_SECS      = 30 * 60; // 30 min
 // Bump to v3+ whenever feed parsing/scoring semantics change to invalidate stale feed-response cache automatically.
-const FEED_CACHE_VERSION          = 'v2';
+const FEED_CACHE_VERSION          = 'v3';
 
 const RECOVERING_DURATION_MS      = 60_000;
 const RECOVERING_PASS_RATE        = 0.25;

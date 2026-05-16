@@ -13,7 +13,8 @@ const DEFAULT_FEEDS = [
   'AbuseIPDB',
   'Shodan',
   'IPInfo',
-  'AbstractEmail',
+  'ZeroBounce',
+  'AlienVault OTX',
   'PhishTank',
 ] as const;
 

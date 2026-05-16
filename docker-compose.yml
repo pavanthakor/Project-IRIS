@@ -24,5 +24,32 @@ services:
       timeout: 5s
       retries: 5
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports: ["3001:3001"]
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/threat_intel
+      REDIS_URL: redis://redis:6379
+      CORS_ORIGIN: http://localhost:5173,http://localhost:5174
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  iris-frontend:
+    build:
+      context: ./iris-frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:3001/api/v1
+    ports: ["5173:80"]
+    depends_on:
+      - backend
+
 volumes:
   pgdata:

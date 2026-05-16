@@ -3,6 +3,22 @@ import { BaseFeed } from './baseFeed';
 import { FeedResult, IoCType } from '../types';
 import { ABUSEIPDB_API_KEY } from '../config';
 
+type AbuseIPDBQuotaCache = {
+  readonly remaining: number | null;
+  readonly total: number | null;
+  readonly fetchedAt: number;
+};
+
+export interface AbuseIPDBQuotaSnapshot {
+  readonly remaining: number | null;
+  readonly total: number | null;
+  readonly updatedAt: string | null;
+  readonly source: 'provider-or-cache' | 'unknown';
+}
+
+const ABUSEIPDB_DEFAULT_TOTAL = 1000;
+let quotaCache: AbuseIPDBQuotaCache | null = null;
+
 // https://www.abuseipdb.com/categories
 const ABUSE_CATEGORY_NAMES: Record<number, string> = {
   1:  'DNS Compromise',
@@ -35,6 +51,71 @@ interface AbuseReport {
   readonly comment: string | null;
   readonly categories: string[];
   readonly reporterCountryCode: string | null;
+}
+
+function toFiniteNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  if (Array.isArray(value) && value.length > 0) {
+    return toFiniteNumber(value[0]);
+  }
+  return null;
+}
+
+function getHeaderNumber(headers: Record<string, unknown> | undefined, name: string): number | null {
+  if (!headers) return null;
+
+  const direct = headers[name];
+  if (direct !== undefined) return toFiniteNumber(direct);
+
+  const lower = name.toLowerCase();
+  for (const [key, value] of Object.entries(headers)) {
+    if (key.toLowerCase() === lower) return toFiniteNumber(value);
+  }
+  return null;
+}
+
+function updateQuotaFromHeaders(headers: Record<string, unknown> | undefined): void {
+  const remaining = getHeaderNumber(headers, 'x-ratelimit-remaining');
+  const total = getHeaderNumber(headers, 'x-ratelimit-limit');
+
+  if (remaining === null && total === null) return;
+
+  quotaCache = {
+    remaining,
+    total: total ?? quotaCache?.total ?? ABUSEIPDB_DEFAULT_TOTAL,
+    fetchedAt: Date.now(),
+  };
+}
+
+export async function getAbuseIPDBQuotaSnapshot(): Promise<AbuseIPDBQuotaSnapshot> {
+  if (!quotaCache) {
+    return {
+      remaining: ABUSEIPDB_DEFAULT_TOTAL,
+      total: ABUSEIPDB_DEFAULT_TOTAL,
+      updatedAt: null,
+      source: 'unknown',
+    };
+  }
+
+  if (quotaCache.remaining === null) {
+    return {
+      remaining: quotaCache.total ?? ABUSEIPDB_DEFAULT_TOTAL,
+      total: quotaCache?.total ?? ABUSEIPDB_DEFAULT_TOTAL,
+      updatedAt: quotaCache ? new Date(quotaCache.fetchedAt).toISOString() : null,
+      source: 'unknown',
+    };
+  }
+
+  return {
+    remaining: quotaCache.remaining,
+    total: quotaCache.total ?? ABUSEIPDB_DEFAULT_TOTAL,
+    updatedAt: new Date(quotaCache.fetchedAt).toISOString(),
+    source: 'provider-or-cache',
+  };
 }
 
 function parseReports(
@@ -75,6 +156,8 @@ class AbuseIPDBFeed extends BaseFeed {
         timeout: 8000,
       });
 
+      updateQuotaFromHeaders(response.headers as Record<string, unknown> | undefined);
+
       const data = response.data?.data;
       if (!data) {
         return { status: 'failed', feedName: this.name, error: 'Unexpected response format', latencyMs: Date.now() - start };
@@ -106,6 +189,9 @@ class AbuseIPDBFeed extends BaseFeed {
         rawData: response.data,
       };
     } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        updateQuotaFromHeaders(error.response?.headers as Record<string, unknown> | undefined);
+      }
       if (axios.isAxiosError(error) && error.response?.status === 404) {
         return {
           status: 'success', feedName: this.name, latencyMs: Date.now() - start,

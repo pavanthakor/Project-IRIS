@@ -10,7 +10,7 @@ const FEED_ORDER = [
   'AbuseIPDB',
   'Shodan',
   'IPInfo',
-  'AbstractEmail',
+  'ZeroBounce',
   'PhishTank',
 ] as const;
 

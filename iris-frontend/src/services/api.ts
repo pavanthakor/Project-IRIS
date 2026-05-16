@@ -61,10 +61,20 @@ api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      localStorage.clear();
-      // Keep it simple: bounce back to landing.
-      if (typeof window !== 'undefined') {
-        window.location.href = '/';
+      const url = (error.config?.url ?? '').toString();
+      const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register');
+
+      // Invalid credentials should be handled by the auth forms — don't hard-redirect.
+      if (!isAuthEndpoint) {
+        localStorage.removeItem(TOKEN_STORAGE_KEY);
+
+        // Bounce back to landing with a reason the UI can display.
+        if (typeof window !== 'undefined') {
+          const current = new URL(window.location.href);
+          current.pathname = '/';
+          current.searchParams.set('reason', 'session-expired');
+          window.location.href = current.toString();
+        }
       }
     }
     return Promise.reject(error);
@@ -103,7 +113,7 @@ export async function getQueryById(id: string): Promise<ThreatProfile> {
 }
 
 export async function getHistory(page = 1, pageSize = 20): Promise<PaginatedHistory> {
-  const { data } = await api.get<PaginatedHistory>('/history', { params: { page, pageSize } });
+  const { data } = await api.get<PaginatedHistory>('/query/history', { params: { page, pageSize } });
   return data;
 }
 
@@ -136,7 +146,7 @@ export async function getHistoryFiltered(
   pageSize = 20
 ): Promise<PaginatedHistory> {
   const params = buildHistoryParams(filters, page, pageSize);
-  const { data } = await api.get<PaginatedHistory>('/history', { params });
+  const { data } = await api.get<PaginatedHistory>('/query/history', { params });
   return data;
 }
 

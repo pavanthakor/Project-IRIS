@@ -9,6 +9,7 @@ import GeoLocationCard from '../components/dashboard/GeoLocationCard';
 import IndicatorCard from '../components/dashboard/IndicatorCard';
 import MitreAttackPanel from '../components/dashboard/MitreAttackPanel';
 import RiskScoreGauge from '../components/dashboard/RiskScoreGauge';
+import VirusTotalDetailsCard from '../components/dashboard/VirusTotalDetailsCard';
 import { useQuery } from '../hooks/useQuery';
 import type { IoCType } from '../types';
 
@@ -132,8 +133,9 @@ export default function DashboardPage() {
       </motion.div>
 
       <motion.div variants={itemVariants} className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-4">
           <FeedResultsPanel feeds={data.feeds} />
+          <VirusTotalDetailsCard profile={data} />
         </div>
         <MitreAttackPanel techniques={data.mitreTechniques} />
       </motion.div>

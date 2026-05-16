@@ -96,7 +96,7 @@ const FEED_WEIGHTS = {
   AbuseIPDB: 0.6,
   Shodan: 0.5,
   IPInfo: 0.4,
-  AbstractEmail: 0.6,
+  ZeroBounce: 0.6,
   default: 0.5,
 } as const;
 
@@ -125,6 +125,21 @@ export function correlate(feeds: readonly FeedResult[]): CorrelationResult {
   );
 
   let riskScore = Math.max(...weightedScores);
+
+  // Tag-based bump: some feeds (notably VirusTotal domains) may have meaningful
+  // tags even when detections are 0. Avoid reporting a hard "NONE" when we have
+  // explicit weak signals like "dga" or "phishing".
+  if (riskScore === 0) {
+    const suspiciousTagKeywords = ['dga', 'phishing', 'malware', 'c2', 'botnet', 'spam'];
+    const hasSuspiciousTag = usefulFeeds.some((feed) =>
+      (feed.tags ?? []).some((tag) =>
+        suspiciousTagKeywords.some((k) => tag.toLowerCase().includes(k))
+      )
+    );
+    if (hasSuspiciousTag) {
+      riskScore = 25;
+    }
+  }
 
   const consensusCount = scores.filter(s => s > 50).length;
   if (consensusCount >= 2) {

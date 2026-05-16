@@ -161,17 +161,23 @@ export function trackRequest(
   const wid            = windowId();
   const roundedMs      = Math.round(responseTimeMs);
 
-  redis
-    .pipeline()
-    .incr('tip:metrics:req:total')
-    .incr(`tip:metrics:req:${bucket}`)
-    .incrby('tip:metrics:req:time_total', roundedMs)
-    .incr(`tip:metrics:req:path:${normalizedPath}`)
-    .expire(`tip:metrics:req:path:${normalizedPath}`, 86_400)
-    .incr(`tip:metrics:req:5min:${wid}`)
-    .expire(`tip:metrics:req:5min:${wid}`, WIN_5MIN_TTL_SEC)
-    .exec()
-    .catch(() => undefined);
+  // Fire-and-forget: metrics must never break the request path.
+  // In tests we may mock Redis without pipeline(); guard against that.
+  try {
+    redis
+      .pipeline()
+      .incr('tip:metrics:req:total')
+      .incr(`tip:metrics:req:${bucket}`)
+      .incrby('tip:metrics:req:time_total', roundedMs)
+      .incr(`tip:metrics:req:path:${normalizedPath}`)
+      .expire(`tip:metrics:req:path:${normalizedPath}`, 86_400)
+      .incr(`tip:metrics:req:5min:${wid}`)
+      .expire(`tip:metrics:req:5min:${wid}`, WIN_5MIN_TTL_SEC)
+      .exec()
+      .catch(() => undefined);
+  } catch {
+    // noop
+  }
 
   // Slow query detection
   if (responseTimeMs > SLOW_QUERY_THRESHOLD) {
@@ -191,12 +197,18 @@ export function trackRequest(
 
 /** Called from advancedRateLimiter when a request is rejected. */
 export function trackRateLimitRejection(identifier: string): void {
-  redis
-    .pipeline()
-    .incr('tip:metrics:rl:rejected')
-    .zincrby('tip:metrics:rl:offenders', 1, identifier)
-    .exec()
-    .catch(() => undefined);
+  // Fire-and-forget: metrics must never break the request path.
+  // In tests we may mock Redis without pipeline(); guard against that.
+  try {
+    redis
+      .pipeline()
+      .incr('tip:metrics:rl:rejected')
+      .zincrby('tip:metrics:rl:offenders', 1, identifier)
+      .exec()
+      .catch(() => undefined);
+  } catch {
+    // noop
+  }
 }
 
 /**

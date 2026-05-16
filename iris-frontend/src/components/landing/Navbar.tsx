@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion, useMotionValueEvent, useScroll } from 'framer-motion';
 import { Eye } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import LoginModal from '../auth/LoginModal';
 import RegisterModal from '../auth/RegisterModal';
 import Modal from '../common/Modal';
+import { useAuth } from '../../hooks/useAuth';
 
 interface NavbarProps {
   isModalOpen: boolean;
@@ -20,8 +22,27 @@ export default function Navbar({
   closeModal,
   switchView,
 }: NavbarProps) {
+  const { isAuthenticated, user, logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const { scrollY } = useScroll();
   const [scrolled, setScrolled] = useState(false);
+
+  const reason = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('reason');
+  }, [location.search]);
+
+  const [showSessionBanner, setShowSessionBanner] = useState(false);
+
+  useEffect(() => {
+    if (reason === 'session-expired') {
+      setShowSessionBanner(true);
+      // Help the user recover immediately.
+      openModal('login');
+    }
+  }, [reason, openModal]);
 
   useMotionValueEvent(scrollY, 'change', (latest) => {
     setScrolled(latest > 20);
@@ -29,6 +50,30 @@ export default function Navbar({
 
   return (
     <>
+      {showSessionBanner && (
+        <div className="fixed top-0 left-0 right-0 z-[60]">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2">
+            <div className="flex-1 rounded-md border border-iris-border bg-iris-panel/90 px-4 py-2 text-sm text-iris-text">
+              <span className="font-semibold text-iris-accent">Session expired.</span>{' '}
+              Please log in again to continue.
+            </div>
+            <button
+              className="iris-btn-secondary px-3 py-2 text-sm"
+              onClick={() => {
+                setShowSessionBanner(false);
+                const params = new URLSearchParams(location.search);
+                params.delete('reason');
+                navigate(
+                  { pathname: location.pathname, search: params.toString() ? `?${params.toString()}` : '' },
+                  { replace: true }
+                );
+              }}
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
       <motion.nav
         className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-3 transition-all duration-300"
         initial={false}
@@ -55,17 +100,37 @@ export default function Navbar({
           <a href="#feeds" className="hover:text-iris-text transition-colors">Feeds</a>
           <a href="/api-docs" target="_blank" rel="noopener noreferrer" className="hover:text-iris-text transition-colors">API Docs</a>
         </div>
-        <div>
-          <button
-            onClick={() => openModal('login')}
-            className="iris-btn-secondary px-4 py-2 text-sm"
-          >
-            Get started
-          </button>
+        <div className="flex items-center gap-3">
+          {isAuthenticated ? (
+            <>
+              <span className="hidden sm:inline text-sm text-iris-text-dim">
+                {user?.email}
+              </span>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="iris-btn-secondary px-4 py-2 text-sm"
+              >
+                Dashboard
+              </button>
+              <button
+                onClick={logout}
+                className="iris-btn-secondary px-4 py-2 text-sm"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => openModal('login')}
+              className="iris-btn-secondary px-4 py-2 text-sm"
+            >
+              Get started
+            </button>
+          )}
         </div>
       </motion.nav>
 
-      <Modal isOpen={isModalOpen} onClose={closeModal}>
+      <Modal isOpen={isModalOpen && !isAuthenticated} onClose={closeModal}>
         <div className="w-full max-w-md">
           <div className="flex mb-4 border-b border-iris-border">
             <button

@@ -36,6 +36,10 @@ function containsTag(feed: FeedResult, keyword: string): boolean {
 
 function detectMetric(feed: FeedResult): string {
   if (unavailableStatus(feed.status)) {
+    if (typeof feed.error === 'string' && feed.error.trim().length > 0) {
+      const cleaned = feed.error.trim();
+      return cleaned.length > 26 ? `${cleaned.slice(0, 23)}…` : cleaned;
+    }
     if (feed.status === 'circuit_open') return 'circuit open';
     if (feed.status === 'timeout') return 'timeout';
     return 'unavailable';
@@ -72,7 +76,12 @@ function detectVerdict(feed: FeedResult): RowVerdict {
   const confidence = typeof feed.confidenceScore === 'number' ? feed.confidenceScore : 0;
 
   if (feedName.includes('virustotal')) {
-    return detections > 0 ? 'Malicious' : 'Clean';
+    if (detections > 0) return 'Malicious';
+    // VT often provides useful tags even when engines are 0/0 or all undetected.
+    if (containsTag(feed, 'dga') || containsTag(feed, 'phishing') || containsTag(feed, 'malware')) {
+      return 'Suspicious';
+    }
+    return 'Clean';
   }
 
   if (feedName.includes('abuse')) {

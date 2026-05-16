@@ -1,5 +1,7 @@
 import { Router } from 'express';
-import { pool, redisClient, isDatabaseDegraded } from '../config/database';
+import { getAbuseIPDBQuotaSnapshot } from '../feeds/abuseIPDB';
+import { ensureRedisConnection, pool, redisClient, isDatabaseDegraded } from '../config/database';
+import { getZeroBounceQuotaSnapshot } from '../feeds/zeroBounce';
 import { getCacheStats } from '../services/cache';
 import { getAllFeedHealth } from '../services/feedHealthService';
 import { systemState } from '../services/systemState';
@@ -44,7 +46,10 @@ const checkDb = async (): Promise<ConnectionStatus> => {
 
 const checkRedis = async (): Promise<ConnectionStatus> => {
   try {
-    await withTimeout(redisClient.ping(), HEALTH_TIMEOUT_MS);
+    await withTimeout(
+      ensureRedisConnection().then(() => redisClient.ping()),
+      HEALTH_TIMEOUT_MS
+    );
     return 'connected';
   } catch {
     return 'disconnected';
@@ -59,7 +64,8 @@ const FEEDS = [
   { label: 'AbuseIPDB', feedName: 'AbuseIPDB', enabledEnv: 'FEED_ABUSEIPDB_ENABLED' },
   { label: 'Shodan', feedName: 'Shodan', enabledEnv: 'FEED_SHODAN_ENABLED' },
   { label: 'IPInfo', feedName: 'IPInfo', enabledEnv: 'FEED_IPINFO_ENABLED' },
-  { label: 'AbstractEmail', feedName: 'AbstractEmail', enabledEnv: 'FEED_ABSTRACTEMAIL_ENABLED' }
+  { label: 'ZeroBounce', feedName: 'ZeroBounce', enabledEnv: 'FEED_ZEROBOUNCE_ENABLED' },
+  { label: 'AlienVault OTX', feedName: 'AlienVault OTX', enabledEnv: 'FEED_ALIENVAULT_OTX_ENABLED' }
 ] as const;
 
 const getFeedHealth = async (
@@ -91,12 +97,24 @@ router.get('/', async (_req, res) => {
     const [db, redisStatus] = await Promise.all([checkDb(), checkRedis()]);
     const redisConnected = redisStatus === 'connected';
 
-    const [feedEntries, cacheStats, feedHealth] = await Promise.all([
+    const [feedEntries, cacheStats, feedHealth, zeroBounceQuota, abuseIpDbQuota] = await Promise.all([
       Promise.all(
         FEEDS.map(async (feed) => [feed.label, await getFeedHealth(feed, redisConnected)] as const)
       ),
       redisConnected ? getCacheStats().catch(() => null) : Promise.resolve(null),
       redisConnected ? getAllFeedHealth().catch(() => null) : Promise.resolve(null),
+      getZeroBounceQuotaSnapshot().catch(() => ({
+        remaining: null,
+        total: 100,
+        updatedAt: null,
+        source: 'unknown' as const,
+      })),
+      getAbuseIPDBQuotaSnapshot().catch(() => ({
+        remaining: null,
+        total: 1000,
+        updatedAt: null,
+        source: 'unknown' as const,
+      })),
     ]);
 
     const feeds = Object.fromEntries(feedEntries) as Record<string, FeedHealth>;
@@ -116,10 +134,15 @@ router.get('/', async (_req, res) => {
         AbuseIPDB:     feeds.AbuseIPDB     ?? 'healthy',
         Shodan:        feeds.Shodan        ?? 'healthy',
         IPInfo:        feeds.IPInfo        ?? 'healthy',
-        AbstractEmail: feeds.AbstractEmail ?? 'healthy',
+        ZeroBounce:    feeds.ZeroBounce    ?? 'healthy',
+        'AlienVault OTX': feeds['AlienVault OTX'] ?? 'healthy',
       },
       cache:      cacheStats ?? { hits: 0, misses: 0, errors: 0, bgRefreshes: 0, hitRate: 0 },
       feedHealth: feedHealth ?? {},
+      quota: {
+        AbuseIPDB: abuseIpDbQuota,
+        ZeroBounce: zeroBounceQuota,
+      },
       version:    VERSION,
     });
   } catch {
@@ -128,7 +151,8 @@ router.get('/', async (_req, res) => {
       AbuseIPDB: isFeedDisabled(process.env.FEED_ABUSEIPDB_ENABLED) ? 'disabled' : 'healthy',
       Shodan: isFeedDisabled(process.env.FEED_SHODAN_ENABLED) ? 'disabled' : 'healthy',
       IPInfo: isFeedDisabled(process.env.FEED_IPINFO_ENABLED) ? 'disabled' : 'healthy',
-      AbstractEmail: isFeedDisabled(process.env.FEED_ABSTRACTEMAIL_ENABLED) ? 'disabled' : 'healthy'
+      ZeroBounce: isFeedDisabled(process.env.FEED_ZEROBOUNCE_ENABLED) ? 'disabled' : 'healthy',
+      'AlienVault OTX': isFeedDisabled(process.env.FEED_ALIENVAULT_OTX_ENABLED) ? 'disabled' : 'healthy'
     } satisfies Record<string, FeedHealth>;
 
     res.status(200).json({
@@ -138,6 +162,20 @@ router.get('/', async (_req, res) => {
       db: 'disconnected',
       redis: 'disconnected',
       feeds: fallbackFeeds,
+      quota: {
+        AbuseIPDB: {
+          remaining: null,
+          total: 1000,
+          updatedAt: null,
+          source: 'unknown' as const,
+        },
+        ZeroBounce: {
+          remaining: null,
+          total: 100,
+          updatedAt: null,
+          source: 'unknown' as const,
+        },
+      },
       version: VERSION
     });
   }

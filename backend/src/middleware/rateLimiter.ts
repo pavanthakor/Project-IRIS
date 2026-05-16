@@ -13,7 +13,7 @@ const getTierLimit = (tier: string | undefined) => {
     case 'free':
       return 20;
     default:
-      return 5;
+      return 20;
   }
 };
 

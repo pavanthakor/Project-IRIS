@@ -32,7 +32,8 @@ export interface AppConfig {
   readonly abuseIPDBApiKey: string;
   readonly shodanApiKey: string;
   readonly ipInfoApiKey: string;
-  readonly abstractEmailApiKey: string;
+  readonly zeroBounceApiKey: string;
+  readonly otxApiKey: string;
   readonly cacheEnabled: boolean;
   readonly authRequired: boolean;
 }
@@ -50,7 +51,8 @@ export const config: AppConfig = {
   abuseIPDBApiKey: process.env.ABUSEIPDB_API_KEY || '',
   shodanApiKey: process.env.SHODAN_API_KEY || '',
   ipInfoApiKey: process.env.IPINFO_API_KEY || '',
-  abstractEmailApiKey: process.env.ABSTRACT_EMAIL_API_KEY || '',
+  zeroBounceApiKey: process.env.ZEROBOUNCE_API_KEY || '',
+  otxApiKey: process.env.OTX_API_KEY || '',
   cacheEnabled: toBool(process.env.CACHE_ENABLED, true),
   authRequired: toBool(process.env.AUTH_REQUIRED, true),
 };
@@ -66,7 +68,7 @@ const feedFlags = {
   AbuseIPDB: envFlag('FEED_ABUSEIPDB_ENABLED'),
   Shodan: envFlag('FEED_SHODAN_ENABLED'),
   IPInfo: envFlag('FEED_IPINFO_ENABLED'),
-  AbstractEmail: envFlag('FEED_ABSTRACTEMAIL_ENABLED'),
+  ZeroBounce: envFlag('FEED_ZEROBOUNCE_ENABLED'),
 };
 
 const enabledFeeds = Object.entries(feedFlags)
@@ -86,6 +88,7 @@ export const VIRUSTOTAL_API_KEY = config.virusTotalApiKey;
 export const ABUSEIPDB_API_KEY = config.abuseIPDBApiKey;
 export const SHODAN_API_KEY = config.shodanApiKey;
 export const IPINFO_API_KEY = config.ipInfoApiKey;
-export const ABSTRACT_EMAIL_API_KEY = config.abstractEmailApiKey;
+export const ZEROBOUNCE_API_KEY = config.zeroBounceApiKey;
+export const OTX_API_KEY = config.otxApiKey;
 
 export default config;

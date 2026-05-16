@@ -56,12 +56,13 @@ function uptimeBarClass(status: UptimeDayStatus): string {
 }
 
 export default function FeedRow({ feed }: FeedRowProps) {
+  const isRemaining = feed.quotaMode === 'remaining';
   const quotaLabel = feed.quotaTotal === null ? `${feed.quotaUsed}/∞` : `${feed.quotaUsed}/${feed.quotaTotal}`;
   const quotaPct = quotaPercent(feed.quotaUsed, feed.quotaTotal);
   const quotaBucket = widthBucket(quotaPct);
 
   return (
-    <div className="grid grid-cols-[minmax(0,1.6fr)_minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.4fr)_minmax(0,1.1fr)] gap-4 px-4 py-4">
+    <div className="grid grid-cols-[minmax(0,1.6fr)_minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.4fr)_minmax(0,1.1fr)] gap-4 px-4 py-4 transition-all duration-300">
       <div className="col-span-2 min-w-0">
         <div className="flex items-center justify-between gap-3">
           <p className="truncate text-sm font-semibold text-iris-text">{feed.name}</p>
@@ -107,7 +108,10 @@ export default function FeedRow({ feed }: FeedRowProps) {
       </div>
 
       <div className="min-w-0">
-        <p className="font-mono text-sm font-semibold text-iris-text">{quotaLabel}</p>
+        <p className="font-mono text-sm font-semibold text-iris-text">
+          {quotaLabel}
+          {isRemaining ? ' remaining' : ''}
+        </p>
         <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-iris-border/60">
           <div className={clsx('h-full rounded-full bg-iris-accent transition-all duration-300', WIDTH_CLASSES[quotaBucket])} />
         </div>

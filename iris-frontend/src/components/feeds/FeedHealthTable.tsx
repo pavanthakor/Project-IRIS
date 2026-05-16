@@ -11,7 +11,7 @@ interface FeedHealthTableProps {
 
 export default function FeedHealthTable({ feeds, loading = false, error, refreshing = false }: FeedHealthTableProps) {
   return (
-    <section className={clsx('iris-card overflow-hidden', refreshing && 'ring-1 ring-iris-accent/10')}>
+    <section className={clsx('iris-card overflow-hidden transition-all duration-300', refreshing && 'ring-1 ring-iris-accent/10 opacity-90')}>
       <div className="grid grid-cols-[minmax(0,1.6fr)_minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.4fr)_minmax(0,1.1fr)] gap-4 border-b border-iris-border/60 px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-iris-text-muted">
         <div>Feed</div>
         <div>Endpoint</div>
@@ -37,7 +37,7 @@ export default function FeedHealthTable({ feeds, loading = false, error, refresh
 
       <div className="divide-y divide-iris-border/50">
         {feeds.map((feed) => (
-          <div key={feed.name} className="hover:bg-iris-elevated/30 transition-colors">
+          <div key={feed.name} className="transition-colors duration-300 hover:bg-iris-elevated/30">
             <FeedRow feed={feed} />
           </div>
         ))}

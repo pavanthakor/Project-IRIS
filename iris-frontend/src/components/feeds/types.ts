@@ -26,7 +26,8 @@ export interface FeedRowModel {
   uptimePercent30d: number;
   uptimeHistory30d: readonly UptimeDayStatus[];
 
-  /** Mocked for now (backend doesn't expose per-feed quota usage). */
+  /** Live feed activity derived from the backend health payload. */
   quotaUsed: number;
   quotaTotal: number | null;
+  quotaMode?: 'used' | 'remaining';
 }

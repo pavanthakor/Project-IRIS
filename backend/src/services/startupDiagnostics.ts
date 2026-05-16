@@ -7,7 +7,7 @@
  */
 
 import os from 'node:os';
-import { pool, redis } from '../config/database';
+import { ensureRedisConnection, pool, redis } from '../config/database';
 import config from '../config';
 import logger from '../utils/logger';
 
@@ -16,7 +16,8 @@ const FEED_KEY_ENV: Array<{ name: string; envKey: string; enabledEnv: string }> 
   { name: 'AbuseIPDB',     envKey: 'ABUSEIPDB_API_KEY',     enabledEnv: 'FEED_ABUSEIPDB_ENABLED'     },
   { name: 'Shodan',        envKey: 'SHODAN_API_KEY',        enabledEnv: 'FEED_SHODAN_ENABLED'        },
   { name: 'IPInfo',        envKey: 'IPINFO_API_KEY',        enabledEnv: 'FEED_IPINFO_ENABLED'        },
-  { name: 'AbstractEmail', envKey: 'ABSTRACT_EMAIL_API_KEY',enabledEnv: 'FEED_ABSTRACTEMAIL_ENABLED' },
+  { name: 'ZeroBounce',    envKey: 'ZEROBOUNCE_API_KEY',    enabledEnv: 'FEED_ZEROBOUNCE_ENABLED'    },
+  { name: 'AlienVault OTX', envKey: 'OTX_API_KEY',          enabledEnv: 'FEED_ALIENVAULT_OTX_ENABLED' },
 ];
 
 async function testDb(): Promise<'ok' | 'failed'> {
@@ -36,7 +37,7 @@ async function testDb(): Promise<'ok' | 'failed'> {
 async function testRedis(): Promise<'ok' | 'failed'> {
   try {
     const reply = await Promise.race([
-      redis.ping(),
+      ensureRedisConnection().then(() => redis.ping()),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('timeout')), 3_000)
       ),

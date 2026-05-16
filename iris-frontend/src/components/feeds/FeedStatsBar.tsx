@@ -2,10 +2,10 @@ import type { ReactNode } from 'react';
 import clsx from 'clsx';
 import type { FeedRowModel } from './types';
 import { formatSeconds } from './formatters';
-import { getMockQuotaSummary } from './mockMetrics';
 
 interface FeedStatsBarProps {
   feeds: readonly FeedRowModel[];
+  liveRequests?: number;
 }
 
 function StatCard({
@@ -20,7 +20,7 @@ function StatCard({
   valueClassName?: string;
 }) {
   return (
-    <div className="iris-card p-4">
+    <div className="iris-card p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-iris-accent/30">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-iris-text-muted">{label}</p>
       <p className={clsx('mt-2 font-mono text-3xl font-bold leading-none text-iris-text', valueClassName)}>{value}</p>
       <p className="mt-2 text-xs text-iris-text-muted">{subtitle}</p>
@@ -33,10 +33,14 @@ function avg(values: readonly number[]): number | null {
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
-export default function FeedStatsBar({ feeds }: FeedStatsBarProps) {
+function sum(values: readonly number[]): number {
+  return values.reduce((a, b) => a + b, 0);
+}
+
+export default function FeedStatsBar({ feeds, liveRequests: liveRequestsProp }: FeedStatsBarProps) {
   const total = feeds.length;
-  const online = feeds.filter((f) => f.operationalStatus !== 'outage').length;
-  const degraded = feeds.filter((f) => f.operationalStatus === 'degraded').length;
+  const online = feeds.filter((f) => f.health === 'healthy').length;
+  const degraded = feeds.filter((f) => f.health === 'circuit_open').length;
 
   const avgLatency = avg(
     feeds.map((f) => f.avgLatencyMs).filter((v): v is number => typeof v === 'number' && Number.isFinite(v) && v > 0)
@@ -47,12 +51,14 @@ export default function FeedStatsBar({ feeds }: FeedStatsBarProps) {
 
   const openCount = feeds.filter((f) => f.circuitState === 'OPEN').length;
   const halfOpenCount = feeds.filter((f) => f.circuitState === 'HALF_OPEN' || f.circuitState === 'RECOVERING').length;
-
-  // Backend doesn't provide per-day quota consumption yet; use a realistic mock summary.
-  const quotaSummary = getMockQuotaSummary();
+  const liveRequests = typeof liveRequestsProp === 'number'
+    ? liveRequestsProp
+    : sum(feeds.map((f) => (f.quotaMode === 'remaining' ? 0 : f.quotaUsed)));
+  const liveBudget = 1200;
+  const liveQuotaPct = Math.min(Math.round((liveRequests / liveBudget) * 100), 100);
 
   return (
-    <section className="grid grid-cols-4 gap-4">
+    <section className="grid grid-cols-4 gap-4 transition-opacity duration-300">
       <StatCard
         label="FEEDS ONLINE"
         value={
@@ -75,8 +81,8 @@ export default function FeedStatsBar({ feeds }: FeedStatsBarProps) {
 
       <StatCard
         label="QUOTA USED TODAY"
-        value={quotaSummary.percentLabel}
-        subtitle={quotaSummary.detailLabel}
+        value={`${liveQuotaPct}%`}
+        subtitle={<span>{liveRequests} of {liveBudget} live calls</span>}
       />
 
       <StatCard

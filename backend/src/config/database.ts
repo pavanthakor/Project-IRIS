@@ -228,21 +228,75 @@ export async function withTransaction<T>(
 let redisConnectInFlight: Promise<void> | null = null;
 
 export async function ensureRedisConnection(): Promise<void> {
-  if (redis.status === 'ready' || redis.status === 'connecting') return;
+  if (redis.status === 'ready') return;
+
+  const waitForReady = (): Promise<void> => {
+    if (redis.status === 'ready') return Promise.resolve();
+    return new Promise<void>((resolve, reject) => {
+      let timeoutId: NodeJS.Timeout | null = null;
+
+      const cleanup = (): void => {
+        if (timeoutId) clearTimeout(timeoutId);
+        redis.off('ready', onReady);
+        redis.off('end', onEnd);
+        redis.off('close', onClose);
+        redis.off('error', onError);
+      };
+
+      const onReady = (): void => {
+        cleanup();
+        resolve();
+      };
+
+      const onEnd = (): void => {
+        cleanup();
+        reject(new Error('Redis connection ended'));
+      };
+
+      const onClose = (): void => {
+        cleanup();
+        reject(new Error('Redis connection closed'));
+      };
+
+      const onError = (error: Error): void => {
+        cleanup();
+        reject(error);
+      };
+
+      // Fail fast if Redis doesn't become ready quickly.
+      timeoutId = setTimeout(() => {
+        cleanup();
+        reject(new Error('Redis connect timeout'));
+      }, 5_000);
+      timeoutId.unref();
+
+      redis.on('ready', onReady);
+      redis.on('end', onEnd);
+      redis.on('close', onClose);
+      redis.on('error', onError);
+    });
+  };
 
   if (!redisConnectInFlight) {
-    redisConnectInFlight = redis
-      .connect()
-      .then(() => undefined)
-      .catch((error: unknown) => {
+    redisConnectInFlight = (async () => {
+      try {
+        if (redis.status === 'connecting') {
+          // A connection attempt is already in progress — wait for readiness.
+          await waitForReady();
+          return;
+        }
+
+        await redis.connect();
+        await waitForReady();
+      } catch (error: unknown) {
         logger.warn('redis_connect_failed', {
           error: error instanceof Error ? error.message : 'unknown',
         });
         throw error;
-      })
-      .finally(() => {
-        redisConnectInFlight = null;
-      });
+      }
+    })().finally(() => {
+      redisConnectInFlight = null;
+    });
   }
 
   await redisConnectInFlight;

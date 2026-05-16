@@ -27,7 +27,7 @@ const TEST_IOC          = '8.8.8.8';
 const TEST_TYPE         = 'ip' as const;
 
 // Only IP-capable feeds participate in the auto-recovery probe.
-// AbstractEmail only supports email — it would always return 'unsupported'.
+// ZeroBounce only supports email — it would always return 'unsupported'.
 const IP_FEEDS: BaseFeed[] = [virusTotalFeed, abuseIPDBFeed, shodanFeed, ipInfoFeed];
 
 // ── Recovery probe ────────────────────────────────────────────────────────────
